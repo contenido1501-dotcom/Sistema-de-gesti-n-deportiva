@@ -1,0 +1,2088 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProTrack Analytics PRO</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0a0e1a;--panel:#1a2235;--panel2:#232d45;--accent:#00d9ff;--accent2:#7c3aed;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--text:#e5e7eb;--muted:#9ca3af;--border:#2a3550}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+body{background:var(--bg);color:var(--text);overflow-x:hidden}
+.app{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+.sidebar{background:linear-gradient(180deg,#0f1628,#0a0e1a);border-right:1px solid var(--border);padding:24px 0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:0 24px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:bold;color:#fff;overflow:hidden;flex-shrink:0}
+.logo-icon img{width:100%;height:100%;object-fit:cover}
+.logo-text{font-size:16px;font-weight:700;letter-spacing:.5px;line-height:1.2}
+.logo-text span{color:var(--accent);display:block;font-size:11px;font-weight:500;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.nav{padding:12px 0}
+.nav-item{padding:10px 24px;cursor:pointer;display:flex;align-items:center;gap:12px;color:var(--muted);transition:all .2s;border-left:3px solid transparent;font-size:13px}
+.nav-item:hover{background:rgba(0,217,255,.05);color:var(--text)}
+.nav-item.active{background:rgba(0,217,255,.08);color:var(--accent);border-left-color:var(--accent)}
+.nav-icon{font-size:16px}
+.nav-divider{height:1px;background:var(--border);margin:8px 24px}
+.nav-label{padding:8px 24px 4px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;font-weight:700}
+.main{padding:24px 32px;overflow-x:hidden}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:16px}
+.page-title{font-size:24px;font-weight:700}
+.page-subtitle{color:var(--muted);font-size:13px;margin-top:4px}
+.topbar-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{padding:9px 16px;border-radius:8px;border:none;cursor:pointer;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:8px;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#0ea5e9);color:#000}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,217,255,.3)}
+.btn-secondary{background:var(--panel2);color:var(--text);border:1px solid var(--border)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-success{background:var(--success);color:#fff}
+.btn-sm{padding:6px 12px;font-size:12px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.card-title{font-size:15px;font-weight:600}
+.card-subtitle{font-size:12px;color:var(--muted);margin-top:2px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--accent)}
+.kpi.purple::before{background:var(--accent2)}
+.kpi.green::before{background:var(--success)}
+.kpi.orange::before{background:var(--warning)}
+.kpi.red::before{background:var(--danger)}
+.kpi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.kpi-value{font-size:24px;font-weight:700;margin-top:4px}
+.kpi-unit{font-size:12px;color:var(--muted);margin-left:3px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:1100px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.sidebar.hidden{display:none}.main{padding:16px}}
+.chart-container{position:relative;height:260px}
+.chart-container.tall{height:340px}
+.heatmap-wrap{position:relative;background:linear-gradient(135deg,#1e5f3a,#2d7a4a);border-radius:12px;padding:20px;aspect-ratio:1.5/1;max-width:100%;overflow:hidden}
+.field{position:relative;width:100%;height:100%;border:2px solid rgba(255,255,255,.6)}
+.field::before{content:'';position:absolute;top:50%;left:0;right:0;height:2px;background:rgba(255,255,255,.6)}
+.field::after{content:'';position:absolute;top:50%;left:50%;width:90px;height:90px;border:2px solid rgba(255,255,255,.6);border-radius:50%;transform:translate(-50%,-50%)}
+.area-box{position:absolute;top:20%;bottom:20%;width:15%;border:2px solid rgba(255,255,255,.6)}
+.area-box.left{left:0}.area-box.right{right:0}
+.heatmap-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+.heatmap-legend{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:12px;color:var(--muted)}
+.heatmap-legend-bar{height:12px;width:150px;border-radius:6px;background:linear-gradient(90deg,#0000ff00,#0000ff80,#00ff00,#ffff00,#ff0000)}
+.table{width:100%;border-collapse:collapse;font-size:13px}
+.table th{text-align:left;padding:9px 12px;background:var(--panel2);color:var(--muted);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.5px}
+.table td{padding:9px 12px;border-bottom:1px solid var(--border)}
+.table tr:hover td{background:rgba(0,217,255,.03)}
+.badge{padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;display:inline-block}
+.badge.low{background:rgba(16,185,129,.15);color:var(--success)}
+.badge.med{background:rgba(245,158,11,.15);color:var(--warning)}
+.badge.high{background:rgba(239,68,68,.15);color:var(--danger)}
+.badge.info{background:rgba(0,217,255,.15);color:var(--accent)}
+.badge.purple{background:rgba(124,58,237,.15);color:var(--accent2)}
+.player-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.section{display:none}
+.section.active{display:block;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.toast{position:fixed;top:20px;right:20px;background:var(--panel);border:1px solid var(--border);border-left:4px solid var(--success);padding:12px 18px;border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:2000;display:none;animation:slideIn .3s;max-width:350px}
+.toast.show{display:block}
+.toast.error{border-left-color:var(--danger)}
+@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:1500;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal-overlay.show{display:flex;animation:fadeIn .2s}
+.modal{background:var(--panel);border:1px solid var(--border);border-radius:16px;width:100%;max-width:650px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.modal-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--panel);z-index:10}
+.modal-title{font-size:17px;font-weight:700}
+.modal-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;width:30px;height:30px;border-radius:6px}
+.modal-body{padding:20px 22px}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.form-input,.form-select,.form-textarea{width:100%;padding:9px 12px;background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:13px}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--accent)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.club-banner{background:linear-gradient(135deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;align-items:center;gap:18px;margin-bottom:20px}
+.club-shield{width:70px;height:70px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:#fff;overflow:hidden;flex-shrink:0}
+.club-shield img{width:100%;height:100%;object-fit:cover}
+.club-info{flex:1;min-width:0}
+.club-name{font-size:20px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.club-dt{font-size:12px;color:var(--muted);margin-top:3px}
+.club-dt strong{color:var(--accent)}
+.action-btns{display:flex;gap:5px}
+.action-btn{width:28px;height:28px;border-radius:6px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s}
+.action-btn.edit{background:rgba(0,217,255,.15);color:var(--accent)}
+.action-btn.delete{background:rgba(239,68,68,.15);color:var(--danger)}
+.empty-state{text-align:center;padding:30px 20px;color:var(--muted)}
+.empty-state-icon{font-size:56px;margin-bottom:12px;opacity:.5}
+.empty-state-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px}
+.diag-panel{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;font-family:monospace;font-size:12px}
+.diag-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)}
+.diag-row:last-child{border-bottom:none}
+.diag-ok{color:var(--success);font-weight:700}
+.diag-err{color:var(--danger);font-weight:700}
+.diag-warn{color:var(--warning);font-weight:700}
+.calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-header{padding:8px;text-align:center;font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700}
+.cal-day{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:6px;cursor:pointer;transition:all .2s;position:relative;min-height:75px}
+.cal-day:hover{border-color:var(--accent)}
+.cal-day.other-month{opacity:.3}
+.cal-day.today{background:rgba(0,217,255,.15);border-color:var(--accent);font-weight:700}
+.cal-day.has-match{border-color:var(--danger);background:rgba(239,68,68,.05)}
+.cal-date{font-size:13px;font-weight:600;margin-bottom:4px}
+.cal-match{font-size:9px;padding:2px 4px;border-radius:4px;margin-top:2px;background:var(--danger);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-match.away{background:var(--accent2)}
+.match-card{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;cursor:pointer;transition:all .2s}
+.match-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.match-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.match-date{font-size:12px;color:var(--muted)}
+.match-competition{padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;background:var(--accent);color:#000}
+.match-teams{display:flex;justify-content:space-between;align-items:center;margin:12px 0}
+.match-team{flex:1;text-align:center}
+.match-team-name{font-weight:700;font-size:14px}
+.match-team-logo{width:40px;height:40px;border-radius:50%;background:var(--panel);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:20px}
+.match-score{font-size:24px;font-weight:700;padding:0 20px}
+.match-result{display:inline-block;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;margin-top:8px}
+.match-result.win{background:rgba(16,185,129,.15);color:var(--success)}
+.match-result.draw{background:rgba(245,158,11,.15);color:var(--warning)}
+.match-result.loss{background:rgba(239,68,68,.15);color:var(--danger)}
+.scouting-header{display:flex;gap:16px;align-items:center;margin-bottom:20px}
+.scouting-logo{width:80px;height:80px;border-radius:12px;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-size:36px}
+.scouting-info{flex:1}
+.scouting-name{font-size:22px;font-weight:700;margin-bottom:4px}
+.scouting-league{font-size:12px;color:var(--muted)}
+.scouting-section{margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.scouting-section:last-child{border-bottom:none}
+.scouting-section-title{font-size:14px;font-weight:700;margin-bottom:12px;color:var(--accent)}
+.strength-weakness{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:700px){.strength-weakness{grid-template-columns:1fr}}
+.sw-item{padding:12px;background:var(--panel2);border-radius:8px;margin-bottom:8px}
+.sw-item.strength{border-left:3px solid var(--success)}
+.sw-item.weakness{border-left:3px solid var(--danger)}
+.sw-label{font-size:10px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.sw-text{font-size:13px}
+.key-player{display:flex;align-items:center;gap:12px;padding:10px;background:var(--panel2);border-radius:8px;margin-bottom:8px}
+.key-player-number{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-weight:700}
+.key-player-info{flex:1}
+.key-player-name{font-weight:600;font-size:13px}
+.key-player-role{font-size:11px;color:var(--muted)}
+.formation-display{background:var(--panel2);border-radius:12px;padding:20px;text-align:center}
+.formation-pitch{width:220px;height:300px;background:linear-gradient(135deg,#1e5f3a,#2d7a4a);border:2px solid rgba(255,255,255,.6);border-radius:8px;margin:0 auto;position:relative}
+.formation-player{position:absolute;width:28px;height:28px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#000;border:2px solid #fff}
+.position-tabs{display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px}
+.pos-tab{padding:8px 16px;background:var(--panel2);border:1px solid var(--border);border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;transition:all .2s}
+.pos-tab:hover{border-color:var(--accent)}
+.pos-tab.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.exercise-builder{background:var(--panel2);border-radius:12px;padding:20px;margin-bottom:16px}
+.builder-section{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.builder-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.builder-label{font-size:12px;font-weight:600;margin-bottom:8px;color:var(--accent)}
+.exercise-preview{background:#fff;color:#000;border-radius:8px;padding:20px;margin-top:16px}
+.exercise-preview h3{color:#0a0e1a;margin-bottom:12px;font-size:18px}
+.exercise-preview p{font-size:13px;line-height:1.7;margin-bottom:8px}
+.exercise-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:14px;transition:all .2s;cursor:pointer}
+.exercise-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.exercise-icon{font-size:32px;margin-bottom:8px}
+.exercise-name{font-weight:700;font-size:13px;margin-bottom:4px}
+.exercise-cat{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.exercise-desc{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4}
+.attendance-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.attendance-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .2s}
+.attendance-card:hover{border-color:var(--accent)}
+.attendance-card.present{border-color:var(--success);background:rgba(16,185,129,.08)}
+.attendance-card.absent{border-color:var(--danger);background:rgba(239,68,68,.08)}
+.attendance-card.excused{border-color:var(--warning);background:rgba(245,158,11,.08)}
+.attendance-status{margin-left:auto;font-size:18px}
+.wellness-slider{margin:14px 0}
+.wellness-slider label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px}
+.wellness-slider input[type=range]{width:100%;accent-color:var(--accent)}
+.wellness-value{text-align:center;font-size:28px;font-weight:700;color:var(--accent)}
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+@media(max-width:900px){.week-grid{grid-template-columns:repeat(2,1fr)}}
+.day-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:12px;min-height:130px;cursor:pointer;transition:all .2s}
+.day-card:hover{border-color:var(--accent)}
+.day-card.today{border-color:var(--accent);background:rgba(0,217,255,.05)}
+.day-card.rest{opacity:.6}
+.day-name{font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:1px}
+.day-date{font-size:18px;font-weight:700;margin:2px 0 8px}
+.session-tag{padding:4px 8px;border-radius:6px;font-size:10px;font-weight:600;margin-bottom:4px;display:block}
+.session-tag.tactica{background:rgba(0,217,255,.15);color:var(--accent)}
+.session-tag.fuerza{background:rgba(124,58,237,.15);color:var(--accent2)}
+.session-tag.recup{background:rgba(16,185,129,.15);color:var(--success)}
+.session-tag.partido{background:rgba(239,68,68,.15);color:var(--danger)}
+.session-tag.descanso{background:rgba(107,114,128,.15);color:var(--muted)}
+.report-template{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s}
+.report-template:hover{border-color:var(--accent);transform:translateY(-2px)}
+.report-template-icon{font-size:28px;margin-bottom:8px}
+.report-template-title{font-weight:700;margin-bottom:3px;font-size:13px}
+.report-template-desc{font-size:11px;color:var(--muted)}
+.report-preview{background:#fff;color:#000;border-radius:8px;padding:24px;max-height:480px;overflow-y:auto;font-size:12px;line-height:1.6}
+.report-preview h1{color:#0a0e1a;font-size:20px;border-bottom:2px solid var(--accent);padding-bottom:6px;margin-bottom:12px}
+.report-preview h2{color:var(--accent2);font-size:15px;margin:14px 0 6px}
+.report-preview table{width:100%;border-collapse:collapse;margin:8px 0}
+.report-preview th,.report-preview td{padding:5px 8px;border:1px solid #ddd;text-align:left;font-size:11px}
+.report-preview th{background:#f3f4f6;font-weight:700}
+.video-container{position:relative;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:16/9}
+.video-container video{width:100%;height:100%;display:block}
+.video-overlay{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.7);padding:6px 12px;border-radius:6px;font-size:11px;font-weight:600;color:var(--accent)}
+.video-markers{position:absolute;bottom:0;left:0;right:0;height:36px;background:rgba(0,0,0,.6);display:flex;align-items:center;padding:0 10px}
+.video-marker{width:6px;height:22px;border-radius:2px;cursor:pointer;transition:all .2s;position:absolute}
+.video-marker:hover{transform:scaleY(1.3)}
+.video-marker.sprint{background:var(--danger)}
+.video-marker.goal{background:var(--success)}
+.video-marker.card{background:var(--warning)}
+.video-marker.tackle{background:var(--accent)}
+.video-controls{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.event-list{max-height:280px;overflow-y:auto}
+.event-item{display:flex;align-items:center;gap:10px;padding:8px;background:var(--panel2);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:all .2s}
+.event-item:hover{background:var(--border)}
+.event-time{font-weight:700;color:var(--accent);min-width:55px;font-size:12px}
+.event-icon{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px}
+.event-icon.sprint{background:rgba(239,68,68,.2)}
+.event-icon.goal{background:rgba(16,185,129,.2)}
+.event-icon.card{background:rgba(245,158,11,.2)}
+.event-icon.tackle{background:rgba(0,217,255,.2)}
+.lineup-formation{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:900px){.lineup-formation{grid-template-columns:1fr}}
+.lineup-pitch{background:linear-gradient(135deg,#1e5f3a,#2d7a4a);border:2px solid rgba(255,255,255,.6);border-radius:12px;padding:20px;aspect-ratio:3/4;position:relative;min-height:400px}
+.lineup-bench{background:var(--panel2);border-radius:12px;padding:16px}
+.formation-select{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.formation-btn{padding:8px 14px;background:var(--panel2);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;transition:all .2s}
+.formation-btn:hover{border-color:var(--accent)}
+.formation-btn.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.asym-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.asym-label{width:110px;font-size:12px}
+.asym-bar{flex:1;display:flex;gap:2px;height:22px;border-radius:4px;overflow:hidden;background:var(--panel2)}
+.asym-l,.asym-r{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff}
+.asym-l{background:var(--accent)}.asym-r{background:var(--accent2)}
+.menu-toggle{display:none;background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:7px 11px;border-radius:8px;cursor:pointer}
+@media(max-width:1100px){.menu-toggle{display:block}}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon" id="sidebarLogo">P</div>
+      <div class="logo-text">
+        <span id="sidebarClubName">Mi Club</span>
+        ProTrack PRO
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-label">Análisis</div>
+      <div class="nav-item active" data-section="dashboard"><span class="nav-icon">📊</span>Dashboard</div>
+      <div class="nav-item" data-section="physical"><span class="nav-icon">🏃</span>Carga Física</div>
+      <div class="nav-item" data-section="intensity"><span class="nav-icon">❤️</span>Intensidad & FC</div>
+      <div class="nav-item" data-section="positional"><span class="nav-icon">🗺️</span>Mapa de Calor</div>
+      <div class="nav-item" data-section="recovery"><span class="nav-icon">🔄</span>Recuperación</div>
+      <div class="nav-divider"></div>
+      <div class="nav-label">Competición</div>
+      <div class="nav-item" data-section="matches"><span class="nav-icon">⚽</span>Partidos</div>
+      <div class="nav-item" data-section="scouting"><span class="nav-icon">🔍</span>Scouting Rivales</div>
+      <div class="nav-item" data-section="stats"><span class="nav-icon">🏆</span>Estadísticas</div>
+      <div class="nav-divider"></div>
+      <div class="nav-label">Gestión</div>
+      <div class="nav-item" data-section="planner"><span class="nav-icon">📅</span>Planificador</div>
+      <div class="nav-item" data-section="attendance"><span class="nav-icon">✅</span>Asistencia</div>
+      <div class="nav-item" data-section="wellness"><span class="nav-icon">😊</span>Wellness / RPE</div>
+      <div class="nav-item" data-section="tests"><span class="nav-icon">🏋️</span>Tests Físicos</div>
+      <div class="nav-item" data-section="injuries"><span class="nav-icon">🏥</span>Lesiones</div>
+      <div class="nav-divider"></div>
+      <div class="nav-label">Entrenamiento</div>
+      <div class="nav-item" data-section="exercises"><span class="nav-icon">💪</span>Ejercicios</div>
+      <div class="nav-item" data-section="exerciseGenerator"><span class="nav-icon">🎯</span>Generador Ejercicios</div>
+      <div class="nav-item" data-section="lineup"><span class="nav-icon">👥</span>Alineaciones</div>
+      <div class="nav-divider"></div>
+      <div class="nav-label">Herramientas</div>
+      <div class="nav-item" data-section="video"><span class="nav-icon">🎬</span>Video</div>
+      <div class="nav-item" data-section="reports"><span class="nav-icon">📄</span>Reportes</div>
+      <div class="nav-item" data-section="players"><span class="nav-icon">👥</span>Plantilla</div>
+      <div class="nav-item" data-section="settings"><span class="nav-icon">⚙️</span>Configuración</div>
+      <div class="nav-item" data-section="diagnostic"><span class="nav-icon">🔧</span>Diagnóstico</div>
+      <div class="nav-item" data-section="backup"><span class="nav-icon">💾</span>Backup</div>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title" id="pageTitle">Dashboard</div>
+        <div class="page-subtitle" id="pageSubtitle">Resumen general</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('hidden')">☰</button>
+        <button class="btn btn-secondary btn-sm" onclick="exportAllData()">💾 Backup</button>
+        <button class="btn btn-secondary btn-sm" onclick="exportCSV()">⬇️ CSV</button>
+        <button class="btn btn-primary btn-sm" onclick="showToast('Datos actualizados')">🔄</button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <section class="section active" id="dashboard">
+      <div class="club-banner">
+        <div class="club-shield" id="clubShield">P</div>
+        <div class="club-info">
+          <div class="club-name" id="clubNameDisplay">Mi Club</div>
+          <div class="club-dt">DT: <strong id="dtNameDisplay">Sin configurar</strong></div>
+          <div class="club-dt" id="clubCategoryDisplay" style="margin-top:2px"></div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="openSettings()">⚙️</button>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Jugadores</div><div class="kpi-value" id="dashPlayers">0</div></div>
+        <div class="kpi green"><div class="kpi-label">Victorias</div><div class="kpi-value" id="dashWins">0</div></div>
+        <div class="kpi orange"><div class="kpi-label">Empates</div><div class="kpi-value" id="dashDraws">0</div></div>
+        <div class="kpi red"><div class="kpi-label">Derrotas</div><div class="kpi-value" id="dashLosses">0</div></div>
+        <div class="kpi purple"><div class="kpi-label">Goles a Favor</div><div class="kpi-value" id="dashGF">0</div></div>
+        <div class="kpi"><div class="kpi-label">Próximo Partido</div><div class="kpi-value" id="dashNextMatch" style="font-size:14px">-</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-header"><div class="card-title">Distribución por Zonas</div></div><div class="chart-container"><canvas id="chartZones"></canvas></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Evolución FC</div></div><div class="chart-container"><canvas id="chartHR"></canvas></div></div>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">Rendimiento por Jugador</div></div>
+        <table class="table"><thead><tr><th>Jugador</th><th>Pos</th><th>Dist</th><th>V.Max</th><th>Sprints</th><th>PL</th><th>FC</th></tr></thead><tbody id="playersTable"></tbody></table>
+      </div>
+    </section>
+
+    <!-- CARGA FÍSICA -->
+    <section class="section" id="physical">
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Distancia Total</div><div class="kpi-value">10.84<span class="kpi-unit">km</span></div></div>
+        <div class="kpi purple"><div class="kpi-label">Vel. Promedio</div><div class="kpi-value">6.8<span class="kpi-unit">km/h</span></div></div>
+        <div class="kpi green"><div class="kpi-label">Trote</div><div class="kpi-value">4.21<span class="kpi-unit">km</span></div></div>
+        <div class="kpi orange"><div class="kpi-label">Carrera</div><div class="kpi-value">3.82<span class="kpi-unit">km</span></div></div>
+        <div class="kpi red"><div class="kpi-label">Sprint</div><div class="kpi-value">0.89<span class="kpi-unit">km</span></div></div>
+        <div class="kpi"><div class="kpi-label">Aceleraciones</div><div class="kpi-value">142</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-header"><div class="card-title">Zonas de Velocidad</div></div><div class="chart-container"><canvas id="chartSpeedZones"></canvas></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Acc vs Dec</div></div><div class="chart-container"><canvas id="chartAccDec"></canvas></div></div>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">Perfil de Velocidad</div></div><div class="chart-container tall"><canvas id="chartSpeedTimeline"></canvas></div></div>
+    </section>
+
+    <!-- INTENSIDAD -->
+    <section class="section" id="intensity">
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">FC Media</div><div class="kpi-value">156<span class="kpi-unit">bpm</span></div></div>
+        <div class="kpi red"><div class="kpi-label">FC Máx</div><div class="kpi-value">192<span class="kpi-unit">bpm</span></div></div>
+        <div class="kpi green"><div class="kpi-label">FC Mín</div><div class="kpi-value">98<span class="kpi-unit">bpm</span></div></div>
+        <div class="kpi orange"><div class="kpi-label">% FC Máx</div><div class="kpi-value">87<span class="kpi-unit">%</span></div></div>
+        <div class="kpi purple"><div class="kpi-label">TRIMP</div><div class="kpi-value">642<span class="kpi-unit">AU</span></div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-header"><div class="card-title">Zonas de Esfuerzo</div></div><div class="chart-container"><canvas id="chartEffortZones"></canvas></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">FC en Tiempo Real</div></div><div class="chart-container"><canvas id="chartHRDetail"></canvas></div></div>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">Intensidad Relativa (m/min)</div></div><div class="chart-container tall"><canvas id="chartIntensity"></canvas></div></div>
+    </section>
+
+    <!-- POSICIONAL -->
+    <section class="section" id="positional">
+      <div class="grid-2">
+        <div class="card"><div class="card-header"><div class="card-title">🗺️ Mapa de Calor</div></div>
+          <div class="heatmap-wrap"><div class="field"><div class="area-box left"></div><div class="area-box right"></div><canvas class="heatmap-canvas" id="heatmapCanvas"></canvas></div></div>
+          <div class="heatmap-legend"><span>Baja</span><div class="heatmap-legend-bar"></div><span>Alta</span></div>
+        </div>
+        <div class="card"><div class="card-header"><div class="card-title">Distancias Tácticas</div></div>
+          <table class="table"><tbody>
+            <tr><td>Longitud del equipo</td><td><strong>32.4 m</strong></td></tr>
+            <tr><td>Anchura del equipo</td><td><strong>41.8 m</strong></td></tr>
+            <tr><td>Distancia entre líneas</td><td><strong>24.6 m</strong></td></tr>
+            <tr><td>Compactación</td><td><span class="badge low">Óptima</span></td></tr>
+            <tr><td>Stretch Index</td><td><strong>1284 m²</strong></td></tr>
+          </tbody></table>
+        </div>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">Mapa por Jugador</div></div><div id="playerChips"></div></div>
+    </section>
+
+    <!-- RECUPERACIÓN -->
+    <section class="section" id="recovery">
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Ratio ACWR</div><div class="kpi-value">1.12</div></div>
+        <div class="kpi green"><div class="kpi-label">Carga Aguda (7d)</div><div class="kpi-value">4,820<span class="kpi-unit">AU</span></div></div>
+        <div class="kpi purple"><div class="kpi-label">Carga Crónica (28d)</div><div class="kpi-value">4,305<span class="kpi-unit">AU</span></div></div>
+        <div class="kpi orange"><div class="kpi-label">Monotonía</div><div class="kpi-value">1.82</div></div>
+        <div class="kpi red"><div class="kpi-label">Strain</div><div class="kpi-value">8,772</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-header"><div class="card-title">Ratio ACWR (6 semanas)</div></div><div class="chart-container"><canvas id="chartACWR"></canvas></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Comparación Sesiones</div></div><div class="chart-container"><canvas id="chartSessions"></canvas></div></div>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">⚖️ Asimetrías (I vs D)</div></div><div id="asymmetryContainer"></div></div>
+    </section>
+
+    <!-- PARTIDOS -->
+    <section class="section" id="matches">
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">📅 Calendario de Partidos</div><div class="card-subtitle">Gestiona tu calendario competitivo</div></div>
+          <button class="btn btn-primary btn-sm" onclick="openMatchModal()">➕ Partido</button>
+        </div>
+        <div class="calendar-header">
+          <button class="btn btn-secondary btn-sm" onclick="changeMatchMonth(-1)">◀</button>
+          <div style="font-weight:700;font-size:15px" id="matchMonthLabel">-</div>
+          <button class="btn btn-secondary btn-sm" onclick="changeMatchMonth(1)">▶</button>
+        </div>
+        <div class="calendar-grid" id="matchCalendar"></div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-header"><div class="card-title">🔜 Próximos Partidos</div></div><div id="upcomingMatches"></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">📊 Historial</div></div><div id="matchHistory"></div></div>
+      </div>
+    </section>
+
+    <!-- SCOUTING -->
+    <section class="section" id="scouting">
+      <div id="scoutingListView">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">🔍 Scouting de Rivales</div><div class="card-subtitle">Análisis táctico de tus oponentes</div></div>
+            <button class="btn btn-primary btn-sm" onclick="openScoutingModal()">➕ Nuevo Rival</button>
+          </div>
+          <div class="grid-3" id="scoutingList"></div>
+        </div>
+      </div>
+      <div id="scoutingDetail" style="display:none">
+        <div class="card">
+          <div class="scouting-header">
+            <div class="scouting-logo" id="scoutLogo">🏟️</div>
+            <div class="scouting-info">
+              <div class="scouting-name" id="scoutName">-</div>
+              <div class="scouting-league" id="scoutLeague">-</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-danger btn-sm" onclick="deleteScouting()">🗑️</button>
+              <button class="btn btn-secondary btn-sm" onclick="closeScoutingDetail()">← Volver</button>
+            </div>
+          </div>
+          <div class="scouting-section">
+            <div class="scouting-section-title">📋 Formación Táctica</div>
+            <div class="formation-display">
+              <div class="formation-pitch" id="scoutFormation"></div>
+              <div style="margin-top:12px;font-weight:700;font-size:16px" id="scoutFormationText">4-3-3</div>
+            </div>
+          </div>
+          <div class="scouting-section">
+            <div class="scouting-section-title">⚡ Fortalezas y Debilidades</div>
+            <div class="strength-weakness">
+              <div><div style="font-size:12px;color:var(--success);margin-bottom:8px;font-weight:700">✅ FORTALEZAS</div><div id="scoutStrengths"></div></div>
+              <div><div style="font-size:12px;color:var(--danger);margin-bottom:8px;font-weight:700">❌ DEBILIDADES</div><div id="scoutWeaknesses"></div></div>
+            </div>
+          </div>
+          <div class="scouting-section">
+            <div class="scouting-section-title">⭐ Jugadores Clave</div>
+            <div id="scoutKeyPlayers"></div>
+          </div>
+          <div class="scouting-section">
+            <div class="scouting-section-title">📈 Estilo de Juego</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="sw-item"><div class="sw-label">Posesión</div><div class="sw-text" id="scoutPossession">-</div></div>
+              <div class="sw-item"><div class="sw-label">Presión</div><div class="sw-text" id="scoutPressing">-</div></div>
+              <div class="sw-item"><div class="sw-label">Transiciones</div><div class="sw-text" id="scoutTransitions">-</div></div>
+              <div class="sw-item"><div class="sw-label">Balón Parado</div><div class="sw-text" id="scoutSetpieces">-</div></div>
+            </div>
+          </div>
+          <div class="scouting-section">
+            <div class="scouting-section-title">📝 Notas del DT</div>
+            <div style="padding:12px;background:var(--panel2);border-radius:8px;font-size:13px;line-height:1.6" id="scoutNotes"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ESTADÍSTICAS -->
+    <section class="section" id="stats">
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">🏆 Estadísticas de Partido</div></div>
+          <div style="display:flex;gap:8px">
+            <select id="statsMatch" class="form-select" style="width:auto" onchange="renderStats()"></select>
+            <button class="btn btn-primary btn-sm" onclick="openStatsModal()">➕ Agregar</button>
+          </div>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi green"><div class="kpi-label">Goles a Favor</div><div class="kpi-value" id="statsGF">0</div></div>
+          <div class="kpi red"><div class="kpi-label">Goles en Contra</div><div class="kpi-value" id="statsGA">0</div></div>
+          <div class="kpi"><div class="kpi-label">Posesión</div><div class="kpi-value">58<span class="kpi-unit">%</span></div></div>
+          <div class="kpi purple"><div class="kpi-label">Tiros al Arco</div><div class="kpi-value">12</div></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-header"><div class="card-title">🥅 Goleadores</div></div><div id="goalsRanking"></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">🎯 Asistencias</div></div><div id="assistsRanking"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">📊 Tabla por Jugador</div></div>
+        <table class="table">
+          <thead><tr><th>Jugador</th><th>PJ</th><th>Goles</th><th>Asist.</th><th>🟨</th><th>🟥</th><th>Valoración</th></tr></thead>
+          <tbody id="statsTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PLANIFICADOR -->
+    <section class="section" id="planner">
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">📅 Planificador de Microciclo</div><div class="card-subtitle">Clic en un día para configurar</div></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary btn-sm" onclick="changeWeek(-1)">◀</button>
+            <button class="btn btn-secondary btn-sm" onclick="changeWeek(0)">Hoy</button>
+            <button class="btn btn-secondary btn-sm" onclick="changeWeek(1)">▶</button>
+          </div>
+        </div>
+        <div style="text-align:center;font-size:14px;color:var(--muted);margin-bottom:16px" id="weekLabel">-</div>
+        <div class="week-grid" id="weekGrid"></div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-header"><div class="card-title">📊 Carga Planificada vs Real</div></div><div class="chart-container"><canvas id="chartPlannedVsReal"></canvas></div></div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🎯 Objetivos de la Semana</div></div>
+          <textarea class="form-textarea" rows="6" placeholder="Objetivos físicos, tácticos, preventivos..." id="weekObjectives"></textarea>
+          <button class="btn btn-primary" onclick="saveObjectives()" style="margin-top:10px;width:100%">💾 Guardar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ASISTENCIA -->
+    <section class="section" id="attendance">
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">✅ Control de Asistencia</div><div class="card-subtitle">Clic para marcar estado</div></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="date" id="attendanceDate" class="form-input" style="width:auto">
+            <select id="attendanceSession" class="form-select" style="width:auto">
+              <option>Entrenamiento AM</option>
+              <option>Entrenamiento PM</option>
+              <option>Partido</option>
+            </select>
+          </div>
+        </div>
+        <div class="kpi-grid" style="margin-bottom:16px">
+          <div class="kpi green"><div class="kpi-label">Presentes</div><div class="kpi-value" id="attPresent">0</div></div>
+          <div class="kpi red"><div class="kpi-label">Ausentes</div><div class="kpi-value" id="attAbsent">0</div></div>
+          <div class="kpi orange"><div class="kpi-label">Justificados</div><div class="kpi-value" id="attExcused">0</div></div>
+          <div class="kpi"><div class="kpi-label">% Asistencia</div><div class="kpi-value" id="attPercent">0%</div></div>
+        </div>
+        <div class="attendance-grid" id="attendanceGrid"></div>
+        <div style="margin-top:16px;display:flex;gap:10px">
+          <button class="btn btn-primary" onclick="saveAttendance()">💾 Guardar</button>
+          <button class="btn btn-secondary" onclick="exportAttendance()">📥 Exportar</button>
+        </div>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">📈 Asistencia (30 días)</div></div><div class="chart-container"><canvas id="chartAttendance"></canvas></div></div>
+    </section>
+
+    <!-- WELLNESS -->
+    <section class="section" id="wellness">
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">😊 Cuestionario Wellness / RPE</div></div>
+          <select id="wellnessPlayer" class="form-select" style="width:auto"></select>
+        </div>
+        <div class="grid-2">
+          <div>
+            <div class="wellness-slider"><label><span>💤 Calidad del Sueño</span><span id="vSleep">5</span></label><input type="range" id="wSleep" min="1" max="10" value="5" oninput="document.getElementById('vSleep').textContent=this.value;updateWellnessCalc()"></div>
+            <div class="wellness-slider"><label><span>⚡ Energía</span><span id="vEnergy">5</span></label><input type="range" id="wEnergy" min="1" max="10" value="5" oninput="document.getElementById('vEnergy').textContent=this.value;updateWellnessCalc()"></div>
+            <div class="wellness-slider"><label><span>😫 Fatiga</span><span id="vFatigue">5</span></label><input type="range" id="wFatigue" min="1" max="10" value="5" oninput="document.getElementById('vFatigue').textContent=this.value;updateWellnessCalc()"></div>
+            <div class="wellness-slider"><label><span>😌 Estrés</span><span id="vStress">5</span></label><input type="range" id="wStress" min="1" max="10" value="5" oninput="document.getElementById('vStress').textContent=this.value;updateWellnessCalc()"></div>
+            <div class="wellness-slider"><label><span>🍎 Nutrición</span><span id="vNutrition">5</span></label><input type="range" id="wNutrition" min="1" max="10" value="5" oninput="document.getElementById('vNutrition').textContent=this.value;updateWellnessCalc()"></div>
+            <div class="wellness-slider"><label><span>😠 Ánimo</span><span id="vMood">5</span></label><input type="range" id="wMood" min="1" max="10" value="5" oninput="document.getElementById('vMood').textContent=this.value;updateWellnessCalc()"></div>
+            <div class="wellness-slider"><label><span>🏋️ RPE</span><span id="vRPE">5</span></label><input type="range" id="wRPE" min="1" max="10" value="5" oninput="document.getElementById('vRPE').textContent=this.value;updateWellnessCalc()"></div>
+            <div class="form-group"><label class="form-label">Duración sesión (min)</label><input type="number" id="wDuration" class="form-input" value="90" min="0" max="180"></div>
+            <button class="btn btn-primary" onclick="saveWellness()" style="width:100%">💾 Guardar</button>
+          </div>
+          <div>
+            <div style="text-align:center;padding:20px;background:var(--panel2);border-radius:12px;margin-bottom:14px">
+              <div style="font-size:11px;color:var(--muted);text-transform:uppercase">Wellness Score</div>
+              <div class="wellness-value" id="wellnessScore">5.0</div>
+              <div style="font-size:12px;color:var(--muted)" id="wellnessStatus">Estado: Normal</div>
+            </div>
+            <div style="text-align:center;padding:20px;background:var(--panel2);border-radius:12px">
+              <div style="font-size:11px;color:var(--muted);text-transform:uppercase">Carga S-RPE</div>
+              <div class="wellness-value" id="sRPEValue" style="color:var(--accent2)">450</div>
+              <div style="font-size:12px;color:var(--muted)">RPE × Duración (AU)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">📈 Evolución (14 días)</div></div><div class="chart-container tall"><canvas id="chartWellness"></canvas></div></div>
+    </section>
+
+    <!-- TESTS -->
+    <section class="section" id="tests">
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">🏋️ Tests Físicos</div></div>
+          <button class="btn btn-primary btn-sm" onclick="openTestModal()">➕ Nuevo Test</button>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi"><div class="kpi-label">Cooper (m)</div><div class="kpi-value">2,650</div></div>
+          <div class="kpi purple"><div class="kpi-label">Yo-Yo</div><div class="kpi-value">16.2</div></div>
+          <div class="kpi green"><div class="kpi-label">CMJ (cm)</div><div class="kpi-value">42.5</div></div>
+          <div class="kpi orange"><div class="kpi-label">Sprint 30m (s)</div><div class="kpi-value">4.12</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">📊 Historial</div></div>
+        <table class="table">
+          <thead><tr><th>Fecha</th><th>Jugador</th><th>Tipo</th><th>Resultado</th><th>Acciones</th></tr></thead>
+          <tbody id="testsTable"></tbody>
+        </table>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-header"><div class="card-title">Evolución Cooper</div></div><div class="chart-container"><canvas id="chartTestCooper"></canvas></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Evolución CMJ</div></div><div class="chart-container"><canvas id="chartTestCMJ"></canvas></div></div>
+      </div>
+    </section>
+
+    <!-- LESIONES -->
+    <section class="section" id="injuries">
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">🏥 Registro de Lesiones</div></div>
+          <button class="btn btn-primary btn-sm" onclick="openInjuryModal()">➕ Registrar</button>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi red"><div class="kpi-label">Activas</div><div class="kpi-value" id="injActive">0</div></div>
+          <div class="kpi orange"><div class="kpi-label">Rehabilitación</div><div class="kpi-value" id="injRehab">0</div></div>
+          <div class="kpi green"><div class="kpi-label">Días Perdidos</div><div class="kpi-value" id="injDays">0</div></div>
+          <div class="kpi purple"><div class="kpi-label">Total Temp.</div><div class="kpi-value" id="injTotal">0</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">📋 Lesiones</div></div>
+        <table class="table">
+          <thead><tr><th>Jugador</th><th>Tipo</th><th>Zona</th><th>Inicio</th><th>Días</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody id="injuriesTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- EJERCICIOS -->
+    <section class="section" id="exercises">
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">💪 Biblioteca de Ejercicios</div></div>
+          <select id="exerciseFilter" class="form-select" style="width:auto" onchange="renderExercises()">
+            <option value="all">Todas</option>
+            <option value="Fuerza">Fuerza</option>
+            <option value="Velocidad">Velocidad</option>
+            <option value="Resistencia">Resistencia</option>
+            <option value="Potencia">Potencia</option>
+            <option value="Movilidad">Movilidad</option>
+            <option value="Prevención">Prevención</option>
+            <option value="Técnica">Técnica</option>
+            <option value="Táctica">Táctica</option>
+          </select>
+        </div>
+        <div class="grid-4" id="exercisesGrid"></div>
+      </div>
+    </section>
+
+    <!-- GENERADOR -->
+    <section class="section" id="exerciseGenerator">
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">🎯 Generador de Ejercicios por Posición</div><div class="card-subtitle">Entrenamientos personalizados</div></div>
+        </div>
+        <div class="position-tabs">
+          <div class="pos-tab active" onclick="selectPosition('all',this)">Todos</div>
+          <div class="pos-tab" onclick="selectPosition('POR',this)">🧤 POR</div>
+          <div class="pos-tab" onclick="selectPosition('DEF',this)">🛡️ DEF</div>
+          <div class="pos-tab" onclick="selectPosition('MID',this)">⚙️ MID</div>
+          <div class="pos-tab" onclick="selectPosition('FWD',this)">⚽ FWD</div>
+        </div>
+        <div class="exercise-builder">
+          <div class="builder-section">
+            <div class="builder-label">1️⃣ Posición</div>
+            <select id="genPosition" class="form-select" onchange="updateExerciseGenerator()">
+              <option value="POR">Portero (POR)</option>
+              <option value="DFC">Defensor Central (DFC)</option>
+              <option value="LD">Lateral Derecho (LD)</option>
+              <option value="LI">Lateral Izquierdo (LI)</option>
+              <option value="MCD">Mediocentro Defensivo (MCD)</option>
+              <option value="MC" selected>Mediocampista Central (MC)</option>
+              <option value="MCO">Mediocampista Ofensivo (MCO)</option>
+              <option value="ED">Extremo Derecho (ED)</option>
+              <option value="EI">Extremo Izquierdo (EI)</option>
+              <option value="DC">Delantero Centro (DC)</option>
+            </select>
+          </div>
+          <div class="builder-section">
+            <div class="builder-label">2️⃣ Objetivo</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+              <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--panel);border-radius:8px;cursor:pointer"><input type="radio" name="genObjective" value="Técnica" checked onchange="updateExerciseGenerator()"><span style="font-size:12px">Técnica</span></label>
+              <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--panel);border-radius:8px;cursor:pointer"><input type="radio" name="genObjective" value="Táctica" onchange="updateExerciseGenerator()"><span style="font-size:12px">Táctica</span></label>
+              <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--panel);border-radius:8px;cursor:pointer"><input type="radio" name="genObjective" value="Físico" onchange="updateExerciseGenerator()"><span style="font-size:12px">Físico</span></label>
+              <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--panel);border-radius:8px;cursor:pointer"><input type="radio" name="genObjective" value="Prevención" onchange="updateExerciseGenerator()"><span style="font-size:12px">Prevención</span></label>
+              <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--panel);border-radius:8px;cursor:pointer"><input type="radio" name="genObjective" value="Velocidad" onchange="updateExerciseGenerator()"><span style="font-size:12px">Velocidad</span></label>
+              <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--panel);border-radius:8px;cursor:pointer"><input type="radio" name="genObjective" value="Resistencia" onchange="updateExerciseGenerator()"><span style="font-size:12px">Resistencia</span></label>
+            </div>
+          </div>
+          <div class="builder-section">
+            <div class="builder-label">3️⃣ Duración</div>
+            <input type="range" id="genDuration" min="10" max="60" value="20" step="5" style="width:100%" oninput="document.getElementById('genDurationValue').textContent=this.value+' min'">
+            <div style="text-align:center;font-size:14px;margin-top:4px"><strong id="genDurationValue">20 min</strong></div>
+          </div>
+          <button class="btn btn-primary" onclick="generateCustomExercise()" style="width:100%;margin-top:12px">🎲 Generar Ejercicio</button>
+        </div>
+        <div class="exercise-preview" id="exercisePreview" style="display:none">
+          <h3 id="previewTitle">Ejercicio Generado</h3>
+          <div id="previewContent"></div>
+          <button class="btn btn-secondary btn-sm" onclick="saveGeneratedExercise()" style="margin-top:12px">💾 Guardar en Biblioteca</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">💡 Ejercicios Recomendados</div><div class="card-subtitle" id="recSub">Para la posición seleccionada</div></div>
+        <div class="grid-3" id="recommendedExercises"></div>
+      </div>
+    </section>
+
+    <!-- ALINEACIONES -->
+    <section class="section" id="lineup">
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">👥 Alineaciones y Formaciones</div></div>
+        </div>
+        <div class="formation-select" id="formationSelect"></div>
+        <div class="lineup-formation">
+          <div class="lineup-pitch" id="lineupPitch"></div>
+          <div class="lineup-bench">
+            <div style="font-weight:700;margin-bottom:12px">📋 Jugadores Disponibles</div>
+            <div id="lineupBench"></div>
+            <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+              <div style="font-weight:700;margin-bottom:8px">💾 Guardar Alineación</div>
+              <input type="text" id="lineupName" class="form-input" placeholder="Ej: vs Rival FC - Fecha 5" style="margin-bottom:8px">
+              <button class="btn btn-primary" onclick="saveLineup()" style="width:100%">💾 Guardar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">📚 Alineaciones Guardadas</div></div>
+        <div id="savedLineups"></div>
+      </div>
+    </section>
+
+    <!-- VIDEO -->
+    <section class="section" id="video">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div><div class="card-title">🎬 Video Sincronizado</div></div></div>
+          <div class="video-container">
+            <video id="matchVideo" controls><source src="" type="video/mp4"></video>
+            <div class="video-overlay" id="videoOverlay">⏱ 00:00</div>
+            <div class="video-markers" id="videoMarkers"></div>
+          </div>
+          <div class="video-controls">
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('videoFile').click()">📁 Cargar</button>
+            <input type="file" id="videoFile" accept="video/*" style="display:none" onchange="loadVideo(event)">
+            <button class="btn btn-primary btn-sm" onclick="addEventMarker('sprint')">⚡ Sprint</button>
+            <button class="btn btn-success btn-sm" onclick="addEventMarker('goal')">⚽ Gol</button>
+            <button class="btn btn-warning btn-sm" onclick="addEventMarker('card')">🟨 Tarjeta</button>
+            <button class="btn btn-secondary btn-sm" onclick="addEventMarker('tackle')">🛡️ Entrada</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-header"><div class="card-title">📋 Timeline</div></div><div class="event-list" id="eventList"><div class="empty-state"><div class="empty-state-icon">🎬</div><div class="empty-state-title">Sin eventos</div></div></div></div>
+      </div>
+    </section>
+
+    <!-- REPORTES -->
+    <section class="section" id="reports">
+      <div class="card">
+        <div class="card-header"><div class="card-title">📄 Generador de Reportes</div></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px">
+          <div class="report-template" onclick="generateReport('individual')"><div class="report-template-icon">👤</div><div class="report-template-title">Individual</div><div class="report-template-desc">Por jugador</div></div>
+          <div class="report-template" onclick="generateReport('equipo')"><div class="report-template-icon">👥</div><div class="report-template-title">Equipo</div><div class="report-template-desc">Resumen plantel</div></div>
+          <div class="report-template" onclick="generateReport('medico')"><div class="report-template-icon">🏥</div><div class="report-template-title">Médico</div><div class="report-template-desc">Lesiones y ACWR</div></div>
+          <div class="report-template" onclick="generateReport('tecnico')"><div class="report-template-icon">📋</div><div class="report-template-title">Cuerpo Técnico</div><div class="report-template-desc">Táctico-físico</div></div>
+          <div class="report-template" onclick="generateReport('semanal')"><div class="report-template-icon">📅</div><div class="report-template-title">Semanal</div><div class="report-template-desc">Evolución</div></div>
+          <div class="report-template" onclick="generateReport('partido')"><div class="report-template-icon">🏆</div><div class="report-template-title">Post-Partido</div><div class="report-template-desc">Análisis match</div></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">⚙️ Configuración</div></div>
+          <div><label class="form-label">Jugador</label><select id="reportPlayer" class="form-select"><option>Todos</option></select></div>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-primary btn-sm" onclick="downloadReport('pdf')">📄 PDF</button>
+            <button class="btn btn-secondary btn-sm" onclick="downloadReport('docx')">📝 Word</button>
+            <button class="btn btn-secondary btn-sm" onclick="downloadReport('email')">📧 Email</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-header"><div class="card-title">👁️ Vista Previa</div></div><div class="report-preview" id="reportPreview"><h1>📊 ProTrack Analytics</h1><p style="color:#666">Selecciona una plantilla.</p></div></div>
+      </div>
+    </section>
+
+    <!-- PLANTILLA -->
+    <section class="section" id="players">
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">👥 Gestión de Plantilla</div><div class="card-subtitle" id="rosterCount">0 jugadores</div></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary btn-sm" onclick="importPlayers()">📥 Importar</button>
+            <button class="btn btn-primary btn-sm" onclick="openPlayerModal()">➕ Agregar</button>
+          </div>
+        </div>
+        <table class="table">
+          <thead><tr><th>#</th><th>Jugador</th><th>Pos</th><th>Edad</th><th>Estado</th><th>Carga</th><th>ACWR</th><th>Acciones</th></tr></thead>
+          <tbody id="rosterTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- CONFIGURACIÓN -->
+    <section class="section" id="settings">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">⚙️ Configuración del Club</div>
+            <div class="card-subtitle">Los datos se guardan automáticamente</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Escudo / Logo</label>
+          <div style="display:flex;align-items:center;gap:14px">
+            <div class="club-shield" id="settingsShield" style="width:90px;height:90px;font-size:40px">P</div>
+            <div>
+              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('logoInput').click()">📁 Subir</button>
+              <button class="btn btn-secondary btn-sm" onclick="removeLogo()">🗑️ Quitar</button>
+              <input type="file" id="logoInput" accept="image/*" style="display:none" onchange="handleLogo(event)">
+              <div style="font-size:11px;color:var(--muted);margin-top:6px">Máximo 2MB · PNG, JPG, SVG</div>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Nombre del Club *</label><input type="text" id="settingsClubName" class="form-input" placeholder="Ej: Club Atlético ProTrack"></div>
+          <div class="form-group"><label class="form-label">Acrónimo</label><input type="text" id="settingsClubShort" class="form-input" maxlength="5" placeholder="Ej: CAP"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Nombre del Director Técnico *</label><input type="text" id="settingsDTName" class="form-input" placeholder="Ej: Carlos Bianchi"></div>
+          <div class="form-group"><label class="form-label">Cargo</label><input type="text" id="settingsDTRole" class="form-input" value="Director Técnico"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Categoría</label><input type="text" id="settingsCategory" class="form-input" placeholder="Ej: Primera División"></div>
+          <div class="form-group"><label class="form-label">Temporada</label><input type="text" id="settingsSeason" class="form-input" value="2026/2027"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" id="settingsEmail" class="form-input" placeholder="dt@club.com"></div>
+        <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="saveClubSettings()">💾 Guardar Configuración</button>
+          <button class="btn btn-success" onclick="testSave()">🧪 Probar Guardado</button>
+          <button class="btn btn-danger" onclick="confirmResetAll()">🗑️ Resetear Todo</button>
+        </div>
+        <div style="margin-top:20px;padding:14px;background:rgba(0,217,255,.08);border-left:3px solid var(--accent);border-radius:6px;font-size:12px">
+          <strong style="color:var(--accent)">💡 Importante:</strong> Después de guardar, ve a <strong>"🔧 Diagnóstico"</strong> para verificar que los datos se guardaron correctamente.
+        </div>
+      </div>
+    </section>
+
+    <!-- DIAGNÓSTICO -->
+    <section class="section" id="diagnostic">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🔧 Diagnóstico del Sistema</div>
+            <div class="card-subtitle">Verifica el estado del guardado y localStorage</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="runDiagnostic()">🔄 Ejecutar Diagnóstico</button>
+        </div>
+        <div id="diagnosticResults"></div>
+        <div style="margin-top:20px;padding:16px;background:var(--panel2);border-radius:8px">
+          <div style="font-weight:700;margin-bottom:10px">📋 Contenido actual de localStorage:</div>
+          <div id="localStorageContent" style="font-family:monospace;font-size:11px;background:var(--bg);padding:12px;border-radius:6px;max-height:300px;overflow-y:auto;white-space:pre-wrap"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BACKUP -->
+    <section class="section" id="backup">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">💾 Backup y Restauración</div>
+            <div class="card-subtitle">Exporta e importa todos tus datos</div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div style="padding:20px;background:var(--panel2);border-radius:10px">
+            <div style="font-size:32px;margin-bottom:10px">📤</div>
+            <div style="font-weight:700;margin-bottom:8px">Exportar Backup</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Descarga un archivo JSON con TODOS tus datos</div>
+            <button class="btn btn-primary" onclick="exportAllData()" style="width:100%">📦 Descargar Backup</button>
+          </div>
+          <div style="padding:20px;background:var(--panel2);border-radius:10px">
+            <div style="font-size:32px;margin-bottom:10px">📥</div>
+            <div style="font-weight:700;margin-bottom:8px">Importar Backup</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Restaura tus datos desde un archivo JSON</div>
+            <button class="btn btn-secondary" onclick="document.getElementById('importBackup').click()" style="width:100%">📂 Seleccionar Archivo</button>
+            <input type="file" id="importBackup" accept=".json" style="display:none" onchange="importAllData(event)">
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- MODALES -->
+<div class="modal-overlay" id="playerModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="playerModalTitle">➕ Agregar Jugador</div><button class="modal-close" onclick="closeModal('playerModal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="playerId">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nombre *</label><input type="text" id="playerName" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Apellido *</label><input type="text" id="playerLastName" class="form-input"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Posición *</label>
+          <select id="playerPosition" class="form-select">
+            <option value="">Seleccionar...</option>
+            <option value="POR">POR - Portero</option><option value="DFC">DFC - Defensor Central</option>
+            <option value="LD">LD - Lateral Derecho</option><option value="LI">LI - Lateral Izquierdo</option>
+            <option value="MCD">MCD - Mediocentro Defensivo</option><option value="MC">MC - Mediocampista</option>
+            <option value="MCO">MCO - Mediocampista Ofensivo</option><option value="ED">ED - Extremo Derecho</option>
+            <option value="EI">EI - Extremo Izquierdo</option><option value="DC">DC - Delantero Centro</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Edad</label><input type="number" id="playerAge" class="form-input"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Dorsal</label><input type="number" id="playerNumber" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Pie hábil</label>
+          <select id="playerFoot" class="form-select"><option>Derecho</option><option>Izquierdo</option><option>Ambidiestro</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Estado</label>
+        <select id="playerStatus" class="form-select">
+          <option value="ok">🟢 Apto</option><option value="warning">🟡 Seguimiento</option>
+          <option value="injured">🔴 Lesionado</option><option value="doubt">🟠 Duda</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Notas</label><textarea id="playerNotes" class="form-textarea" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('playerModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="savePlayer()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="matchModal">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header"><div class="modal-title">⚽ Agregar Partido</div><button class="modal-close" onclick="closeModal('matchModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Rival *</label><input type="text" id="matchOpponent" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Competición</label><input type="text" id="matchCompetition" class="form-input"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Fecha *</label><input type="date" id="matchDate" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Hora</label><input type="time" id="matchTime" class="form-input"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Local / Visitante</label>
+        <select id="matchVenue" class="form-select">
+          <option value="home">🏠 Local</option>
+          <option value="away">✈️ Visitante</option>
+          <option value="neutral">⚪ Campo Neutral</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Goles a Favor</label><input type="number" id="matchGF" class="form-input" value="0" min="0"></div>
+        <div class="form-group"><label class="form-label">Goles en Contra</label><input type="number" id="matchGA" class="form-input" value="0" min="0"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notas</label><textarea id="matchNotes" class="form-textarea" rows="3"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('matchModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveMatch()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="scoutingModal">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header"><div class="modal-title">🔍 Nuevo Scouting</div><button class="modal-close" onclick="closeModal('scoutingModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nombre del Equipo *</label><input type="text" id="scoutTeamName" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Liga / Competición</label><input type="text" id="scoutLeague" class="form-input"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Formación Táctica</label>
+          <select id="scoutFormation" class="form-select">
+            <option>4-3-3</option><option>4-4-2</option><option>4-2-3-1</option>
+            <option>3-5-2</option><option>3-4-3</option><option>5-3-2</option>
+            <option>4-1-4-1</option><option>3-4-2-1</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Nivel del Rival</label>
+          <select id="scoutLevel" class="form-select"><option>Alto</option><option>Medio</option><option>Bajo</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Fortalezas (una por línea)</label><textarea id="scoutStrengths" class="form-textarea" rows="3"></textarea></div>
+      <div class="form-group"><label class="form-label">Debilidades (una por línea)</label><textarea id="scoutWeaknesses" class="form-textarea" rows="3"></textarea></div>
+      <div class="form-group"><label class="form-label">Jugadores Clave (Nombre - Número - Posición)</label><textarea id="scoutKeyPlayers" class="form-textarea" rows="3"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Posesión</label>
+          <select id="scoutPossession" class="form-select"><option>Alta (>60%)</option><option>Media (45-60%)</option><option>Baja (<45%)</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Presión</label>
+          <select id="scoutPressing" class="form-select"><option>Alta (desde arriba)</option><option>Media (medio campo)</option><option>Baja (bloque bajo)</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Notas del DT</label><textarea id="scoutNotesInput" class="form-textarea" rows="3"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('scoutingModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveScouting()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="testModal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header"><div class="modal-title">🏋️ Registrar Test</div><button class="modal-close" onclick="closeModal('testModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Jugador</label><select id="testPlayer" class="form-select"></select></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Tipo</label>
+          <select id="testType" class="form-select">
+            <option value="Cooper">Test Cooper (m)</option>
+            <option value="Yo-Yo">Yo-Yo IR (nivel)</option>
+            <option value="CMJ">CMJ (cm)</option>
+            <option value="Sprint30">Sprint 30m (s)</option>
+            <option value="Sprint10">Sprint 10m (s)</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Resultado</label><input type="number" step="0.01" id="testResult" class="form-input"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Fecha</label><input type="date" id="testDate" class="form-input"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('testModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTest()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="injuryModal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header"><div class="modal-title">🏥 Registrar Lesión</div><button class="modal-close" onclick="closeModal('injuryModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Jugador</label><select id="injPlayer" class="form-select"></select></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Tipo</label>
+          <select id="injType" class="form-select">
+            <option>Distensión muscular</option><option>Esguince</option><option>Contractura</option>
+            <option>Rotura fibrilar</option><option>Tendinitis</option><option>Contusión</option>
+            <option>Sobrecarga</option><option>Otra</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Zona</label>
+          <select id="injZone" class="form-select">
+            <option>Muslo posterior</option><option>Muslo anterior</option><option>Gemelo</option>
+            <option>Ingle</option><option>Tobillo</option><option>Rodilla</option>
+            <option>Espalda</option><option>Otra</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Fecha inicio</label><input type="date" id="injStart" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Días estimados</label><input type="number" id="injDaysEst" class="form-input" value="14"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Estado</label>
+        <select id="injStatus" class="form-select">
+          <option value="active">🔴 Activa</option><option value="rehab">🟡 Rehabilitación</option><option value="recovered">🟢 Recuperado</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Descripción</label><textarea id="injDesc" class="form-textarea" rows="3"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('injuryModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveInjury()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="statsModal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header"><div class="modal-title">⚽ Agregar Estadísticas</div><button class="modal-close" onclick="closeModal('statsModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Jugador</label><select id="statsPlayer" class="form-select"></select></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Goles</label><input type="number" id="stGoals" class="form-input" value="0" min="0"></div>
+        <div class="form-group"><label class="form-label">Asistencias</label><input type="number" id="stAssists" class="form-input" value="0" min="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Amarillas</label><input type="number" id="stYellow" class="form-input" value="0" min="0"></div>
+        <div class="form-group"><label class="form-label">Rojas</label><input type="number" id="stRed" class="form-input" value="0" min="0"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Valoración (1-10)</label><input type="number" id="stRating" class="form-input" value="7" min="1" max="10" step="0.1"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('statsModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveStats()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="dayModal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header"><div class="modal-title" id="dayModalTitle">📅 Configurar Día</div><button class="modal-close" onclick="closeModal('dayModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Tipo de Sesión</label>
+        <select id="daySessionType" class="form-select">
+          <option value="descanso">😴 Descanso</option>
+          <option value="recup">🟢 Recuperación</option>
+          <option value="tactica">🔵 Táctica</option>
+          <option value="fuerza">🟣 Fuerza</option>
+          <option value="partido">🔴 Partido</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Horario</label><input type="text" id="dayTime" class="form-input" placeholder="09:00 - 11:00"></div>
+      <div class="form-group"><label class="form-label">Carga planificada (AU)</label><input type="number" id="dayLoad" class="form-input" value="500"></div>
+      <div class="form-group"><label class="form-label">Objetivo</label><textarea id="dayObjective" class="form-textarea" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('dayModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveDayPlan()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-body">
+      <div style="text-align:center;padding:16px">
+        <div style="font-size:50px;margin-bottom:10px" id="confirmIcon">⚠️</div>
+        <div style="font-size:17px;font-weight:700;margin-bottom:6px" id="confirmTitle">¿Estás seguro?</div>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:16px" id="confirmText">Esta acción no se puede deshacer.</div>
+        <div style="display:flex;gap:10px;justify-content:center">
+          <button class="btn btn-secondary" onclick="closeModal('confirmModal')">Cancelar</button>
+          <button class="btn btn-danger" id="confirmBtn">Confirmar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✅ <span id="toastMsg"></span></div>
+
+<script>
+// ============ ESTADO GLOBAL ============
+let players = [];
+let clubConfig = {name:'Mi Club de Fútbol',shortName:'MCF',dtName:'',dtRole:'Director Técnico',category:'',season:'2026/2027',email:'',logo:null};
+let matches = [];
+let scoutings = [];
+let weekPlan = {};
+let attendance = {};
+let wellness = [];
+let tests = [];
+let injuries = [];
+let matchStats = {};
+let customExercises = [];
+let savedLineups = [];
+let currentWeekOffset = 0;
+let currentDayEdit = null;
+let currentMatchMonth = new Date();
+let currentScouting = null;
+let currentFormation = '4-3-3';
+let generatedExercise = null;
+let videoEvents = [];
+let confirmCallback = null;
+
+// ============ PERSISTENCIA ============
+function saveData(showToastMsg){
+  try {
+    localStorage.setItem('pt_players', JSON.stringify(players));
+    localStorage.setItem('pt_club', JSON.stringify(clubConfig));
+    localStorage.setItem('pt_matches', JSON.stringify(matches));
+    localStorage.setItem('pt_scoutings', JSON.stringify(scoutings));
+    localStorage.setItem('pt_weekPlan', JSON.stringify(weekPlan));
+    localStorage.setItem('pt_attendance', JSON.stringify(attendance));
+    localStorage.setItem('pt_wellness', JSON.stringify(wellness));
+    localStorage.setItem('pt_tests', JSON.stringify(tests));
+    localStorage.setItem('pt_injuries', JSON.stringify(injuries));
+    localStorage.setItem('pt_stats', JSON.stringify(matchStats));
+    localStorage.setItem('pt_customEx', JSON.stringify(customExercises));
+    localStorage.setItem('pt_lineups', JSON.stringify(savedLineups));
+    console.log('✅ Datos guardados');
+    if(showToastMsg) showToast('💾 Datos guardados');
+    return true;
+  } catch(e) {
+    console.error('❌ Error al guardar:', e.message);
+    if(e.name === 'QuotaExceededError'){
+      const tempLogo = clubConfig.logo;
+      clubConfig.logo = null;
+      try {
+        localStorage.setItem('pt_club', JSON.stringify(clubConfig));
+        clubConfig.logo = tempLogo;
+        showToast('⚠️ Guardado sin logo (muy grande)', true);
+        return true;
+      } catch(e2) {
+        clubConfig.logo = tempLogo;
+        showToast('❌ Error: almacenamiento lleno', true);
+        return false;
+      }
+    }
+    showToast('❌ Error al guardar: ' + e.message, true);
+    return false;
+  }
+}
+
+function loadData(){
+  try {
+    const c = localStorage.getItem('pt_club');
+    if(c){
+      clubConfig = {...clubConfig, ...JSON.parse(c)};
+      console.log('✅ Club cargado:', clubConfig.name);
+    }
+    const map = {'pt_players':'players','pt_matches':'matches','pt_scoutings':'scoutings','pt_weekPlan':'weekPlan','pt_attendance':'attendance','pt_wellness':'wellness','pt_tests':'tests','pt_injuries':'injuries','pt_stats':'matchStats','pt_customEx':'customExercises','pt_lineups':'savedLineups'};
+    Object.keys(map).forEach(k=>{const v=localStorage.getItem(k);if(v)window[map[k]]=JSON.parse(v)});
+    if(!players.length) players = getDefaultPlayers();
+    return true;
+  } catch(e) {
+    console.error('❌ Error al cargar:', e);
+    return false;
+  }
+}
+
+function getDefaultPlayers(){
+  return [
+    {id:1,name:'Juan',lastName:'Martínez',pos:'DC',age:26,number:9,foot:'Derecho',status:'ok',notes:'',dist:11.2,vmax:31.2,sprints:32,pl:912,fc:158,acwr:1.12,asym:2.1},
+    {id:2,name:'Alejandro',lastName:'Rodríguez',pos:'MC',age:24,number:8,foot:'Derecho',status:'ok',notes:'',dist:10.8,vmax:28.4,sprints:18,pl:842,fc:156,acwr:1.08,asym:1.8},
+    {id:3,name:'Lucas',lastName:'García',pos:'MC',age:28,number:5,foot:'Derecho',status:'ok',notes:'',dist:10.4,vmax:27.1,sprints:14,pl:798,fc:151,acwr:0.95,asym:3.4},
+    {id:4,name:'Matías',lastName:'López',pos:'LD',age:25,number:2,foot:'Derecho',status:'warning',notes:'',dist:11.8,vmax:30.8,sprints:28,pl:945,fc:162,acwr:1.38,asym:4.2},
+    {id:5,name:'Diego',lastName:'Fernández',pos:'LI',age:23,number:3,foot:'Izquierdo',status:'ok',notes:'',dist:11.4,vmax:29.6,sprints:24,pl:887,fc:154,acwr:1.15,asym:2.8},
+    {id:6,name:'Pablo',lastName:'Sánchez',pos:'DFC',age:30,number:4,foot:'Derecho',status:'ok',notes:'',dist:9.2,vmax:26.4,sprints:8,pl:682,fc:142,acwr:0.88,asym:1.5},
+    {id:7,name:'Ramón',lastName:'Torres',pos:'DFC',age:27,number:6,foot:'Derecho',status:'ok',notes:'',dist:9.6,vmax:27.2,sprints:10,pl:712,fc:145,acwr:0.92,asym:2.0},
+    {id:8,name:'Cristian',lastName:'Díaz',pos:'ED',age:22,number:7,foot:'Derecho',status:'danger',notes:'Monitorear',dist:10.9,vmax:32.4,sprints:36,pl:968,fc:164,acwr:1.45,asym:5.8},
+    {id:9,name:'Facundo',lastName:'Ruiz',pos:'EI',age:24,number:11,foot:'Izquierdo',status:'warning',notes:'',dist:10.7,vmax:31.8,sprints:34,pl:952,fc:161,acwr:1.32,asym:3.9},
+    {id:10,name:'Hernán',lastName:'Vargas',pos:'DC',age:29,number:10,foot:'Derecho',status:'ok',notes:'',dist:9.8,vmax:29.2,sprints:22,pl:812,fc:152,acwr:1.05,asym:2.4},
+    {id:11,name:'Kevin',lastName:'Mendoza',pos:'MC',age:21,number:14,foot:'Derecho',status:'ok',notes:'',dist:10.2,vmax:28.8,sprints:20,pl:824,fc:155,acwr:1.10,asym:1.9},
+    {id:12,name:'Martín',lastName:'Gómez',pos:'POR',age:27,number:1,foot:'Derecho',status:'ok',notes:'',dist:4.5,vmax:18.2,sprints:4,pl:420,fc:128,acwr:0.95,asym:1.2}
+  ];
+}
+
+// ============ ACTUALIZAR UI ============
+function updateClubUI(){
+  document.getElementById('sidebarClubName').textContent = clubConfig.shortName || clubConfig.name || 'Mi Club';
+  const sidebarLogo = document.getElementById('sidebarLogo');
+  sidebarLogo.innerHTML = clubConfig.logo ? '<img src="' + clubConfig.logo + '">' : (clubConfig.shortName || 'P').substring(0,1);
+  document.getElementById('clubNameDisplay').textContent = clubConfig.name || 'Mi Club';
+  document.getElementById('dtNameDisplay').textContent = clubConfig.dtName || 'Sin configurar';
+  document.getElementById('clubCategoryDisplay').textContent = clubConfig.category ? '🏆 ' + clubConfig.category + ' · ' + clubConfig.season : '';
+  const shieldEl = document.getElementById('clubShield');
+  shieldEl.innerHTML = clubConfig.logo ? '<img src="' + clubConfig.logo + '">' : (clubConfig.shortName || 'P').substring(0,1);
+  document.title = (clubConfig.name || 'ProTrack') + ' · ProTrack Analytics';
+  updateClubPreview();
+}
+
+function updateClubPreview(){
+  const ss = document.getElementById('settingsShield');
+  if(ss) ss.innerHTML = clubConfig.logo ? '<img src="' + clubConfig.logo + '">' : (clubConfig.shortName || 'P').substring(0,1);
+}
+
+function compressLogo(file, maxWidth, callback){
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const img = new Image();
+    img.onload = function(){
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+      if(width > maxWidth){ height = (height * maxWidth) / width; width = maxWidth; }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      const compressed = canvas.toDataURL('image/jpeg', 0.7);
+      console.log('📷 Logo comprimido:', Math.round(compressed.length/1024), 'KB');
+      callback(compressed);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ============ CONFIGURACIÓN ============
+function loadClubSettings(){
+  document.getElementById('settingsClubName').value = clubConfig.name || '';
+  document.getElementById('settingsClubShort').value = clubConfig.shortName || '';
+  document.getElementById('settingsDTName').value = clubConfig.dtName || '';
+  document.getElementById('settingsDTRole').value = clubConfig.dtRole || 'Director Técnico';
+  document.getElementById('settingsCategory').value = clubConfig.category || '';
+  document.getElementById('settingsSeason').value = clubConfig.season || '2026/2027';
+  document.getElementById('settingsEmail').value = clubConfig.email || '';
+  updateClubPreview();
+}
+
+function saveClubSettings(){
+  const name = document.getElementById('settingsClubName').value.trim();
+  const dt = document.getElementById('settingsDTName').value.trim();
+  if(!name){ showToast('❌ Ingresa el nombre del club', true); return; }
+  if(!dt){ showToast('❌ Ingresa el nombre del DT', true); return; }
+  clubConfig.name = name;
+  clubConfig.shortName = document.getElementById('settingsClubShort').value.trim().toUpperCase() || name.substring(0,3).toUpperCase();
+  clubConfig.dtName = dt;
+  clubConfig.dtRole = document.getElementById('settingsDTRole').value.trim() || 'Director Técnico';
+  clubConfig.category = document.getElementById('settingsCategory').value.trim();
+  clubConfig.season = document.getElementById('settingsSeason').value.trim();
+  clubConfig.email = document.getElementById('settingsEmail').value.trim();
+  if(saveData(true)){
+    setTimeout(function(){ updateClubUI(); showToast('✅ Configuración guardada y aplicada'); }, 100);
+  }
+}
+
+function handleLogo(e){
+  const f = e.target.files[0];
+  if(!f) return;
+  if(f.size > 5*1024*1024){ showToast('❌ Imagen muy grande (máx 5MB)', true); return; }
+  showToast('⏳ Comprimiendo logo...');
+  compressLogo(f, 200, function(compressed){
+    clubConfig.logo = compressed;
+    updateClubPreview();
+    if(saveData(true)){ updateClubUI(); showToast('✅ Logo cargado y guardado'); }
+  });
+}
+
+function removeLogo(){ clubConfig.logo = null; updateClubPreview(); saveData(true); updateClubUI(); showToast('Logo eliminado'); }
+
+function testSave(){
+  try {
+    const testData = {timestamp: Date.now(), test: 'ok'};
+    localStorage.setItem('pt_test', JSON.stringify(testData));
+    const retrieved = JSON.parse(localStorage.getItem('pt_test'));
+    if(retrieved.timestamp === testData.timestamp){ showToast('✅ ¡Guardado funciona correctamente!'); }
+    else { showToast('❌ Los datos no coinciden', true); }
+  } catch(e) { showToast('❌ Error: ' + e.message, true); }
+}
+
+function confirmResetAll(){
+  if(!confirm('⚠️ ¿Estás seguro? Se borrarán TODOS los datos.')) return;
+  ['pt_players','pt_club','pt_matches','pt_scoutings','pt_weekPlan','pt_attendance','pt_wellness','pt_tests','pt_injuries','pt_stats','pt_customEx','pt_lineups'].forEach(k=>localStorage.removeItem(k));
+  players = getDefaultPlayers();
+  clubConfig = {name:'Mi Club de Fútbol',shortName:'MCF',dtName:'',dtRole:'Director Técnico',category:'',season:'2026/2027',email:'',logo:null};
+  matches=[];scoutings=[];weekPlan={};attendance={};wellness=[];tests=[];injuries=[];matchStats={};customExercises=[];savedLineups=[];
+  saveData(true); updateClubUI(); loadClubSettings(); showToast('✅ Todo reseteado');
+}
+
+// ============ DIAGNÓSTICO ============
+function runDiagnostic(){
+  const results = [];
+  try { localStorage.setItem('pt_test_diag', 'test'); localStorage.removeItem('pt_test_diag'); results.push({label:'localStorage disponible', status:'ok', value:'Sí ✅'}); }
+  catch(e) { results.push({label:'localStorage disponible', status:'err', value:'No ❌'}); }
+  const protocol = window.location.protocol;
+  results.push({label:'Protocolo', status: protocol === 'file:' ? 'warn' : 'ok', value: protocol + (protocol === 'file:' ? ' ⚠️' : ' ✅')});
+  const savedClub = localStorage.getItem('pt_club');
+  if(savedClub){
+    try {
+      const c = JSON.parse(savedClub);
+      results.push({label:'Club en localStorage', status: c.name ? 'ok' : 'warn', value: c.name || '(vacío)'});
+      results.push({label:'DT en localStorage', status: c.dtName ? 'ok' : 'warn', value: c.dtName || '(vacío)'});
+      results.push({label:'Logo en localStorage', status: c.logo ? 'ok' : 'warn', value: c.logo ? 'Sí (' + Math.round(c.logo.length/1024) + ' KB)' : 'No'});
+    } catch(e) { results.push({label:'Club en localStorage', status:'err', value:'Error ❌'}); }
+  } else { results.push({label:'Club en localStorage', status:'err', value:'No hay datos ❌'}); }
+  results.push({label:'Club en memoria', status: clubConfig.name ? 'ok' : 'warn', value: clubConfig.name || '(vacío)'});
+  results.push({label:'DT en memoria', status: clubConfig.dtName ? 'ok' : 'warn', value: clubConfig.dtName || '(vacío)'});
+  results.push({label:'Jugadores', status:'ok', value: players.length});
+  results.push({label:'Partidos', status:'ok', value: matches.length});
+  results.push({label:'Scoutings', status:'ok', value: scoutings.length});
+  results.push({label:'Lesiones', status:'ok', value: injuries.length});
+  let totalSize = 0;
+  for(let key in localStorage){ if(localStorage.hasOwnProperty(key)) totalSize += localStorage[key].length; }
+  results.push({label:'Tamaño localStorage', status: totalSize > 4*1024*1024 ? 'warn' : 'ok', value: (totalSize/1024).toFixed(2) + ' KB'});
+  const html = results.map(r => '<div class="diag-row"><span>' + r.label + '</span><span class="diag-' + r.status + '">' + r.value + '</span></div>').join('');
+  document.getElementById('diagnosticResults').innerHTML = '<div class="diag-panel">' + html + '</div>';
+  let content = '';
+  for(let key in localStorage){
+    if(key.startsWith('pt_')){
+      const val = localStorage[key];
+      content += '📦 ' + key + ': ' + val.length + ' bytes\n';
+      try {
+        const parsed = JSON.parse(val);
+        if(key === 'pt_club'){ content += '   Nombre: ' + parsed.name + '\n   DT: ' + parsed.dtName + '\n   Logo: ' + (parsed.logo ? 'Sí' : 'No') + '\n'; }
+        else if(Array.isArray(parsed)){ content += '   Total: ' + parsed.length + ' items\n'; }
+      } catch(e){}
+      content += '\n';
+    }
+  }
+  document.getElementById('localStorageContent').textContent = content || '(localStorage vacío)';
+  showToast('✅ Diagnóstico completado');
+}
+
+// ============ NAVEGACIÓN ============
+const titles = {
+  dashboard:['Dashboard','Resumen general del club'],
+  physical:['Carga Física','Métricas de rendimiento físico'],
+  intensity:['Intensidad & FC','Análisis cardiovascular'],
+  positional:['Mapa de Calor','Análisis posicional'],
+  recovery:['Recuperación','Ratio ACWR y fatiga'],
+  matches:['⚽ Partidos','Calendario y resultados'],
+  scouting:['🔍 Scouting','Análisis de rivales'],
+  stats:['🏆 Estadísticas','Goles, asistencias y más'],
+  planner:['📅 Planificador','Microciclo semanal'],
+  attendance:['✅ Asistencia','Control diario'],
+  wellness:['😊 Wellness / RPE','Cuestionarios de bienestar'],
+  tests:['🏋️ Tests Físicos','Evaluaciones físicas'],
+  injuries:['🏥 Lesiones','Historial médico'],
+  exercises:['💪 Ejercicios','Biblioteca'],
+  exerciseGenerator:['🎯 Generador','Ejercicios por posición'],
+  lineup:['👥 Alineaciones','Formaciones tácticas'],
+  video:['🎬 Video','Análisis sincronizado'],
+  reports:['📄 Reportes','Generador de informes'],
+  players:['👥 Plantilla','Gestión de jugadores'],
+  settings:['⚙️ Configuración','Personaliza tu club'],
+  diagnostic:['🔧 Diagnóstico','Verifica el estado del sistema'],
+  backup:['💾 Backup','Respaldo de datos']
+};
+
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    item.classList.add('active');
+    const sec = item.dataset.section;
+    document.getElementById(sec).classList.add('active');
+    document.getElementById('pageTitle').textContent = titles[sec][0];
+    document.getElementById('pageSubtitle').textContent = titles[sec][1];
+    if(sec==='positional') setTimeout(()=>drawHeatmap('heatmapCanvas'),100);
+    if(sec==='matches') renderMatches();
+    if(sec==='scouting'){ closeScoutingDetail(); renderScoutingList(); }
+    if(sec==='planner') renderWeek();
+    if(sec==='attendance') renderAttendance();
+    if(sec==='wellness') renderWellness();
+    if(sec==='tests') renderTests();
+    if(sec==='injuries') renderInjuries();
+    if(sec==='stats') renderStats();
+    if(sec==='exercises') renderExercises();
+    if(sec==='exerciseGenerator'){ updateExerciseGenerator(); renderRecommended(); }
+    if(sec==='lineup') renderLineup();
+    if(sec==='settings') loadClubSettings();
+    if(sec==='diagnostic') runDiagnostic();
+  });
+});
+
+function openSettings(){
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelector('[data-section="settings"]').classList.add('active');
+  document.getElementById('settings').classList.add('active');
+  document.getElementById('pageTitle').textContent = titles.settings[0];
+  document.getElementById('pageSubtitle').textContent = titles.settings[1];
+  loadClubSettings();
+}
+
+// ============ JUGADORES ============
+function renderRoster(){
+  const tb = document.getElementById('rosterTable');
+  document.getElementById('rosterCount').textContent = players.length + ' jugadores';
+  if(!players.length){ tb.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">👥</div><div class="empty-state-title">Plantilla vacía</div></div></td></tr>'; return; }
+  tb.innerHTML = players.map(p=>{
+    const sm = {ok:['🟢','Apto'],warning:['🟡','Seguim.'],danger:['🔴','Riesgo'],injured:['🔴','Lesionado'],doubt:['🟠','Duda']};
+    const [ic,txt] = sm[p.status]||['⚪','-'];
+    return '<tr><td><strong>' + (p.number||'-') + '</strong></td><td><div style="display:flex;align-items:center;gap:8px"><div class="player-avatar">' + (p.name[0]||'?').toUpperCase() + '</div><div><strong>' + p.lastName + ', ' + p.name + '</strong></div></div></td><td><span class="badge info">' + p.pos + '</span></td><td>' + (p.age||'-') + '</td><td>' + ic + ' ' + txt + '</td><td>' + (p.pl||0) + ' AU</td><td><strong style="color:' + ((p.acwr||0)>1.3?'var(--danger)':(p.acwr||0)<0.8?'var(--warning)':'var(--success)') + '">' + (p.acwr||0).toFixed(2) + '</strong></td><td><div class="action-btns"><button class="action-btn edit" onclick="editPlayer(' + p.id + ')">✏️</button><button class="action-btn delete" onclick="confirmDeletePlayer(' + p.id + ')">🗑️</button></div></td></tr>';
+  }).join('');
+}
+
+function renderPlayersTable(){
+  const tb = document.getElementById('playersTable'); if(!tb) return;
+  tb.innerHTML = players.map(p=>'<tr><td><div style="display:flex;align-items:center;gap:8px"><div class="player-avatar">' + (p.name[0]||'?').toUpperCase() + '</div><strong>' + p.lastName + ', ' + p.name + '</strong></div></td><td><span class="badge info">' + p.pos + '</span></td><td>' + (p.dist||0) + ' km</td><td>' + (p.vmax||0) + '</td><td>' + (p.sprints||0) + '</td><td>' + (p.pl||0) + '</td><td>' + (p.fc||0) + '</td></tr>').join('');
+}
+
+function renderPlayerChips(){
+  const c = document.getElementById('playerChips'); if(!c) return;
+  c.innerHTML = players.slice(0,10).map((p,i)=>'<div class="player-chip ' + (i===0?'active':'') + '" style="display:inline-flex;align-items:center;gap:8px;padding:6px 12px;background:var(--panel2);border:1px solid var(--border);border-radius:20px;font-size:12px;cursor:pointer;margin:4px" onclick="selectPlayer(this)"><div class="player-avatar">' + (p.name[0]||'?').toUpperCase() + '</div>' + p.lastName + '</div>').join('');
+}
+
+function selectPlayer(el){ document.querySelectorAll('.player-chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); drawHeatmap('heatmapCanvas',.5+Math.random()*.8); }
+
+function openPlayerModal(){
+  document.getElementById('playerModal').classList.add('show');
+  document.getElementById('playerModalTitle').textContent = '➕ Agregar Jugador';
+  document.getElementById('playerId').value = '';
+  ['playerName','playerLastName','playerAge','playerNumber','playerNotes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('playerPosition').value = '';
+  document.getElementById('playerStatus').value = 'ok';
+  document.getElementById('playerFoot').value = 'Derecho';
+}
+
+function editPlayer(id){
+  const p = players.find(x=>x.id===id); if(!p) return;
+  document.getElementById('playerModal').classList.add('show');
+  document.getElementById('playerModalTitle').textContent = '✏️ Editar Jugador';
+  document.getElementById('playerId').value = p.id;
+  document.getElementById('playerName').value = p.name||'';
+  document.getElementById('playerLastName').value = p.lastName||'';
+  document.getElementById('playerPosition').value = p.pos||'';
+  document.getElementById('playerAge').value = p.age||'';
+  document.getElementById('playerNumber').value = p.number||'';
+  document.getElementById('playerFoot').value = p.foot||'Derecho';
+  document.getElementById('playerStatus').value = p.status||'ok';
+  document.getElementById('playerNotes').value = p.notes||'';
+}
+
+function savePlayer(){
+  const id = document.getElementById('playerId').value;
+  const name = document.getElementById('playerName').value.trim();
+  const lastName = document.getElementById('playerLastName').value.trim();
+  const pos = document.getElementById('playerPosition').value;
+  if(!name||!lastName||!pos){ showToast('❌ Completa nombre, apellido y posición', true); return; }
+  const data = {name,lastName,pos,age:parseInt(document.getElementById('playerAge').value)||null,number:parseInt(document.getElementById('playerNumber').value)||null,foot:document.getElementById('playerFoot').value,status:document.getElementById('playerStatus').value,notes:document.getElementById('playerNotes').value.trim()};
+  if(id){
+    const idx = players.findIndex(p=>p.id==id);
+    if(idx>=0) players[idx]={...players[idx],...data};
+    showToast('✅ Jugador actualizado');
+  } else {
+    data.id = Date.now();
+    data.dist=(9+Math.random()*3).toFixed(1)*1; data.vmax=(25+Math.random()*8).toFixed(1)*1;
+    data.sprints=Math.floor(10+Math.random()*30); data.pl=Math.floor(600+Math.random()*400);
+    data.fc=Math.floor(140+Math.random()*25); data.acwr=(0.8+Math.random()*0.6).toFixed(2)*1;
+    data.asym=(1+Math.random()*5).toFixed(1)*1;
+    players.push(data);
+    showToast('✅ Jugador agregado');
+  }
+  saveData(true); renderAll(); closeModal('playerModal');
+}
+
+function confirmDeletePlayer(id){
+  const p = players.find(x=>x.id===id); if(!p) return;
+  showConfirm('🗑️','¿Eliminar a ' + p.name + ' ' + p.lastName + '?','Esta acción no se puede deshacer.',()=>{ players=players.filter(p=>p.id!==id); saveData(true); renderAll(); showToast('✅ Eliminado'); });
+}
+
+function importPlayers(){
+  const input = document.createElement('input'); input.type='file'; input.accept='.csv,.json';
+  input.onchange = e=>{
+    const f = e.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = ev=>{
+      try{
+        if(f.name.endsWith('.json')){ const d = JSON.parse(ev.target.result); if(Array.isArray(d)) d.forEach(p=>{ p.id=p.id||Date.now()+Math.random(); players.push(p); }); }
+        else { ev.target.result.split('\n').filter(l=>l.trim()).slice(1).forEach(line=>{ const [name,lastName,pos,age,number] = line.split(','); if(name&&lastName) players.push({id:Date.now()+Math.random(),name:name.trim(),lastName:lastName.trim(),pos:(pos||'MC').trim(),age:parseInt(age)||null,number:parseInt(number)||null,foot:'Derecho',status:'ok',notes:'',dist:0,vmax:0,sprints:0,pl:0,fc:0,acwr:1,asym:0}); }); }
+        saveData(true); renderAll(); showToast('✅ Importado');
+      } catch(err){ showToast('❌ Error',true); }
+    };
+    r.readAsText(f);
+  };
+  input.click();
+}
+
+// ============ PARTIDOS ============
+function renderMatches(){
+  const year = currentMatchMonth.getFullYear();
+  const month = currentMatchMonth.getMonth();
+  const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('matchMonthLabel').textContent = monthNames[month] + ' ' + year;
+  const firstDay = new Date(year,month,1).getDay();
+  const daysInMonth = new Date(year,month+1,0).getDate();
+  const adjustFirstDay = firstDay===0?6:firstDay-1;
+  const dayNames = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  let html = dayNames.map(d=>'<div class="cal-header">' + d + '</div>').join('');
+  for(let i=0;i<adjustFirstDay;i++) html += '<div class="cal-day other-month"></div>';
+  const today = new Date().toISOString().split('T')[0];
+  for(let day=1;day<=daysInMonth;day++){
+    const dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+    const dayMatches = matches.filter(m=>m.date===dateStr);
+    const isToday = dateStr===today;
+    html += '<div class="cal-day ' + (isToday?'today':'') + ' ' + (dayMatches.length?'has-match':'') + '"><div class="cal-date">' + day + '</div>' + dayMatches.map(m=>'<div class="cal-match ' + (m.venue==='away'?'away':'') + '">' + (m.venue==='away'?'@':'') + ' ' + m.opponent.substring(0,10) + '</div>').join('') + '</div>';
+  }
+  document.getElementById('matchCalendar').innerHTML = html;
+  const upcoming = matches.filter(m=>m.date>=today).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5);
+  document.getElementById('upcomingMatches').innerHTML = upcoming.length ? upcoming.map(m=>renderMatchCard(m)).join('') : '<div class="empty-state"><div class="empty-state-icon">⚽</div><div class="empty-state-title">Sin partidos próximos</div></div>';
+  const history = matches.filter(m=>m.date<today).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  document.getElementById('matchHistory').innerHTML = history.length ? history.map(m=>renderMatchCard(m)).join('') : '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-title">Sin historial</div></div>';
+  updateMatchStats();
+}
+
+function renderMatchCard(m){
+  const resultClass = m.gf>m.ga?'win':m.gf===m.ga?'draw':'loss';
+  const resultText = m.gf>m.ga?'VICTORIA':m.gf===m.ga?'EMPATE':'DERROTA';
+  return '<div class="match-card"><div class="match-header"><div class="match-date">' + m.date + ' · ' + (m.time||'-') + '</div><div class="match-competition">' + (m.competition||'-') + '</div></div><div class="match-teams"><div class="match-team"><div class="match-team-logo">' + (m.venue==='away'?'✈️':'🏠') + '</div><div class="match-team-name">' + (m.venue==='away'?m.opponent:clubConfig.name) + '</div></div><div class="match-score">' + m.gf + '-' + m.ga + '</div><div class="match-team"><div class="match-team-logo">' + (m.venue==='away'?'🏠':'✈️') + '</div><div class="match-team-name">' + (m.venue==='away'?clubConfig.name:m.opponent) + '</div></div></div><div style="text-align:center"><span class="match-result ' + resultClass + '">' + resultText + '</span></div></div>';
+}
+
+function changeMatchMonth(dir){ currentMatchMonth.setMonth(currentMatchMonth.getMonth()+dir); renderMatches(); }
+
+function openMatchModal(){
+  document.getElementById('matchModal').classList.add('show');
+  document.getElementById('matchDate').value = new Date().toISOString().split('T')[0];
+  ['matchOpponent','matchCompetition','matchNotes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('matchGF').value = 0;
+  document.getElementById('matchGA').value = 0;
+}
+
+function saveMatch(){
+  const match = { id:Date.now(), opponent:document.getElementById('matchOpponent').value.trim(), competition:document.getElementById('matchCompetition').value.trim(), date:document.getElementById('matchDate').value, time:document.getElementById('matchTime').value, venue:document.getElementById('matchVenue').value, gf:parseInt(document.getElementById('matchGF').value)||0, ga:parseInt(document.getElementById('matchGA').value)||0, notes:document.getElementById('matchNotes').value };
+  if(!match.opponent||!match.date){ showToast('❌ Completa rival y fecha', true); return; }
+  matches.push(match);
+  saveData(true); renderMatches(); closeModal('matchModal');
+}
+
+function updateMatchStats(){
+  document.getElementById('dashWins').textContent = matches.filter(m=>m.gf>m.ga).length;
+  document.getElementById('dashDraws').textContent = matches.filter(m=>m.gf===m.ga).length;
+  document.getElementById('dashLosses').textContent = matches.filter(m=>m.gf<m.ga).length;
+  document.getElementById('dashGF').textContent = matches.reduce((s,m)=>s+m.gf,0);
+  const today = new Date().toISOString().split('T')[0];
+  const next = matches.filter(m=>m.date>=today).sort((a,b)=>a.date.localeCompare(b.date))[0];
+  document.getElementById('dashNextMatch').textContent = next ? next.date.substring(5) + ' vs ' + next.opponent : '-';
+}
+
+// ============ SCOUTING ============
+function renderScoutingList(){
+  const container = document.getElementById('scoutingList');
+  if(!scoutings.length){ container.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">🔍</div><div class="empty-state-title">Sin rivales scouteados</div></div>'; return; }
+  container.innerHTML = scoutings.map(s=>'<div class="match-card" onclick="viewScouting(' + s.id + ')"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px"><div style="width:50px;height:50px;border-radius:10px;background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:24px">🏟️</div><div style="flex:1;min-width:0"><div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + s.teamName + '</div><div style="font-size:11px;color:var(--muted)">' + (s.league||'-') + '</div></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="badge info">' + s.formation + '</span><span class="badge ' + (s.level==='Alto'?'high':s.level==='Medio'?'med':'low') + '">' + s.level + '</span></div></div>').join('');
+}
+
+function openScoutingModal(){
+  document.getElementById('scoutingModal').classList.add('show');
+  ['scoutTeamName','scoutLeague','scoutStrengths','scoutWeaknesses','scoutKeyPlayers','scoutNotesInput'].forEach(id=>document.getElementById(id).value='');
+}
+
+function saveScouting(){
+  const scouting = { id:Date.now(), teamName:document.getElementById('scoutTeamName').value.trim(), league:document.getElementById('scoutLeague').value.trim(), formation:document.getElementById('scoutFormation').value, level:document.getElementById('scoutLevel').value, strengths:document.getElementById('scoutStrengths').value.split('\n').filter(l=>l.trim()), weaknesses:document.getElementById('scoutWeaknesses').value.split('\n').filter(l=>l.trim()), keyPlayers:document.getElementById('scoutKeyPlayers').value.split('\n').filter(l=>l.trim()), possession:document.getElementById('scoutPossession').value, pressing:document.getElementById('scoutPressing').value, notes:document.getElementById('scoutNotesInput').value };
+  if(!scouting.teamName){ showToast('❌ Ingresa el nombre del equipo', true); return; }
+  scoutings.push(scouting);
+  saveData(true); renderScoutingList(); closeModal('scoutingModal');
+}
+
+function viewScouting(id){
+  currentScouting = scoutings.find(s=>s.id===id); if(!currentScouting) return;
+  document.getElementById('scoutLogo').textContent = '🏟️';
+  document.getElementById('scoutName').textContent = currentScouting.teamName;
+  document.getElementById('scoutLeague').textContent = currentScouting.league||'-';
+  document.getElementById('scoutFormationText').textContent = currentScouting.formation;
+  renderFormationOnPitch('scoutFormation',currentScouting.formation);
+  document.getElementById('scoutStrengths').innerHTML = currentScouting.strengths.length ? currentScouting.strengths.map(s=>'<div class="sw-item strength"><div class="sw-text">' + s + '</div></div>').join('') : '<div style="color:var(--muted);font-size:12px">Sin datos</div>';
+  document.getElementById('scoutWeaknesses').innerHTML = currentScouting.weaknesses.length ? currentScouting.weaknesses.map(w=>'<div class="sw-item weakness"><div class="sw-text">' + w + '</div></div>').join('') : '<div style="color:var(--muted);font-size:12px">Sin datos</div>';
+  document.getElementById('scoutKeyPlayers').innerHTML = currentScouting.keyPlayers.length ? currentScouting.keyPlayers.map(p=>{ const parts = p.split('-').map(x=>x.trim()); return '<div class="key-player"><div class="key-player-number">' + (parts[1]||'?') + '</div><div class="key-player-info"><div class="key-player-name">' + (parts[0]||'Jugador') + '</div><div class="key-player-role">' + (parts[2]||'-') + '</div></div></div>'; }).join('') : '<div style="color:var(--muted);font-size:12px">Sin jugadores clave</div>';
+  document.getElementById('scoutPossession').textContent = currentScouting.possession||'-';
+  document.getElementById('scoutPressing').textContent = currentScouting.pressing||'-';
+  document.getElementById('scoutTransitions').textContent = currentScouting.level==='Alto'?'Rápidas y directas':'Normales';
+  document.getElementById('scoutSetpieces').textContent = currentScouting.level==='Alto'?'Peligrosos':'Normales';
+  document.getElementById('scoutNotes').textContent = currentScouting.notes||'Sin notas adicionales';
+  document.getElementById('scoutingListView').style.display = 'none';
+  document.getElementById('scoutingDetail').style.display = 'block';
+}
+
+function closeScoutingDetail(){ document.getElementById('scoutingListView').style.display = 'block'; document.getElementById('scoutingDetail').style.display = 'none'; currentScouting = null; }
+
+function deleteScouting(){
+  if(!currentScouting) return;
+  if(!confirm('¿Eliminar scouting de ' + currentScouting.teamName + '?')) return;
+  scoutings = scoutings.filter(s=>s.id!==currentScouting.id);
+  saveData(true); closeScoutingDetail(); renderScoutingList(); showToast('✅ Scouting eliminado');
+}
+
+function renderFormationOnPitch(pitchId,formation){
+  const pitch = document.getElementById(pitchId); pitch.innerHTML = '';
+  const positions = {
+    '4-3-3': [{x:50,y:90,n:1},{x:20,y:70,n:2},{x:40,y:75,n:3},{x:60,y:75,n:4},{x:80,y:70,n:5},{x:35,y:50,n:6},{x:50,y:55,n:8},{x:65,y:50,n:10},{x:20,y:25,n:7},{x:50,y:20,n:9},{x:80,y:25,n:11}],
+    '4-4-2': [{x:50,y:90,n:1},{x:20,y:70,n:2},{x:40,y:75,n:3},{x:60,y:75,n:4},{x:80,y:70,n:5},{x:15,y:45,n:11},{x:38,y:50,n:8},{x:62,y:50,n:6},{x:85,y:45,n:7},{x:35,y:20,n:9},{x:65,y:20,n:10}],
+    '4-2-3-1': [{x:50,y:90,n:1},{x:20,y:70,n:2},{x:40,y:75,n:3},{x:60,y:75,n:4},{x:80,y:70,n:5},{x:35,y:55,n:6},{x:65,y:55,n:8},{x:20,y:35,n:11},{x:50,y:40,n:10},{x:80,y:35,n:7},{x:50,y:15,n:9}],
+    '3-5-2': [{x:50,y:90,n:1},{x:30,y:70,n:2},{x:50,y:75,n:4},{x:70,y:70,n:5},{x:15,y:50,n:3},{x:38,y:55,n:6},{x:62,y:55,n:8},{x:85,y:50,n:7},{x:35,y:25,n:10},{x:65,y:25,n:9}],
+    '3-4-3': [{x:50,y:90,n:1},{x:30,y:70,n:2},{x:50,y:75,n:4},{x:70,y:70,n:5},{x:20,y:50,n:3},{x:40,y:55,n:6},{x:60,y:55,n:8},{x:80,y:50,n:7},{x:25,y:25,n:11},{x:50,y:20,n:9},{x:75,y:25,n:10}],
+    '5-3-2': [{x:50,y:90,n:1},{x:15,y:70,n:2},{x:35,y:75,n:3},{x:50,y:72,n:4},{x:65,y:75,n:5},{x:85,y:70,n:6},{x:35,y:50,n:7},{x:50,y:55,n:8},{x:65,y:50,n:9},{x:35,y:20,n:10},{x:65,y:20,n:11}],
+    '4-1-4-1': [{x:50,y:90,n:1},{x:20,y:70,n:2},{x:40,y:75,n:3},{x:60,y:75,n:4},{x:80,y:70,n:5},{x:50,y:60,n:6},{x:15,y:40,n:11},{x:38,y:45,n:8},{x:62,y:45,n:7},{x:85,y:40,n:10},{x:50,y:15,n:9}],
+    '3-4-2-1': [{x:50,y:90,n:1},{x:30,y:70,n:2},{x:50,y:75,n:4},{x:70,y:70,n:5},{x:15,y:50,n:3},{x:38,y:55,n:6},{x:62,y:55,n:8},{x:85,y:50,n:7},{x:35,y:30,n:10},{x:65,y:30,n:11},{x:50,y:15,n:9}]
+  };
+  const pos = positions[formation]||positions['4-3-3'];
+  pos.forEach(p=>{ const el = document.createElement('div'); el.className = 'formation-player'; el.style.left = p.x+'%'; el.style.top = p.y+'%'; el.textContent = p.n; pitch.appendChild(el); });
+}
+
+// ============ ESTADÍSTICAS ============
+function renderStats(){
+  const sel = document.getElementById('statsMatch');
+  const matchKeys = Object.keys(matchStats);
+  if(matchKeys.length===0) sel.innerHTML = '<option>Partido Demo</option>';
+  else sel.innerHTML = matchKeys.map(k=>'<option>' + k + '</option>').join('');
+  const match = sel.value;
+  const data = matchStats[match]||[];
+  const demoData = data.length ? data : players.map(p=>({playerId:p.id,goals:Math.floor(Math.random()*3),assists:Math.floor(Math.random()*2),yellow:Math.floor(Math.random()*2),red:Math.random()>.9?1:0,minutes:Math.floor(60+Math.random()*30),rating:(5+Math.random()*5).toFixed(1)*1}));
+  let gf=0; demoData.forEach(d=>gf+=d.goals);
+  document.getElementById('statsGF').textContent = gf;
+  document.getElementById('statsGA').textContent = Math.floor(Math.random()*3);
+  const goalsRank = demoData.filter(d=>d.goals>0).sort((a,b)=>b.goals-a.goals).slice(0,5);
+  const assistsRank = demoData.filter(d=>d.assists>0).sort((a,b)=>b.assists-a.assists).slice(0,5);
+  const maxG = Math.max(...goalsRank.map(d=>d.goals),1);
+  const maxA = Math.max(...assistsRank.map(d=>d.assists),1);
+  document.getElementById('goalsRanking').innerHTML = goalsRank.length ? goalsRank.map(d=>{ const p=players.find(x=>x.id===d.playerId); return '<div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--panel2);border-radius:8px;margin-bottom:6px"><div style="flex:1;font-size:13px">' + (p?p.lastName:'-') + '</div><div style="flex:2;height:8px;background:var(--border);border-radius:4px;overflow:hidden"><div style="height:100%;width:' + (d.goals/maxG)*100 + '%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:4px"></div></div><div style="font-weight:700;min-width:40px;text-align:center">' + d.goals + '</div></div>'; }).join('') : '<div class="empty-state">Sin goles</div>';
+  document.getElementById('assistsRanking').innerHTML = assistsRank.length ? assistsRank.map(d=>{ const p=players.find(x=>x.id===d.playerId); return '<div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--panel2);border-radius:8px;margin-bottom:6px"><div style="flex:1;font-size:13px">' + (p?p.lastName:'-') + '</div><div style="flex:2;height:8px;background:var(--border);border-radius:4px;overflow:hidden"><div style="height:100%;width:' + (d.assists/maxA)*100 + '%;background:linear-gradient(90deg,#10b981,#00d9ff);border-radius:4px"></div></div><div style="font-weight:700;min-width:40px;text-align:center">' + d.assists + '</div></div>'; }).join('') : '<div class="empty-state">Sin asistencias</div>';
+  document.getElementById('statsTable').innerHTML = demoData.map(d=>{ const p = players.find(x=>x.id===d.playerId); return '<tr><td>' + (p?p.lastName+', '+p.name:'-') + '</td><td>1</td><td><strong>' + d.goals + '</strong></td><td>' + d.assists + '</td><td>' + (d.yellow?'🟨'+d.yellow:'-') + '</td><td>' + (d.red?'🟥':'-') + '</td><td><span class="badge ' + (d.rating>=7.5?'low':d.rating>=6?'med':'high') + '">' + d.rating.toFixed(1) + '</span></td></tr>'; }).join('');
+}
+
+function openStatsModal(){
+  document.getElementById('statsModal').classList.add('show');
+  document.getElementById('statsPlayer').innerHTML = players.map(p=>'<option value="' + p.id + '">' + p.lastName + ', ' + p.name + '</option>').join('');
+}
+
+function saveStats(){
+  const match = document.getElementById('statsMatch').value;
+  if(!matchStats[match]) matchStats[match] = [];
+  matchStats[match].push({ playerId:parseInt(document.getElementById('statsPlayer').value), goals:parseInt(document.getElementById('stGoals').value)||0, assists:parseInt(document.getElementById('stAssists').value)||0, yellow:parseInt(document.getElementById('stYellow').value)||0, red:parseInt(document.getElementById('stRed').value)||0, minutes:90, rating:parseFloat(document.getElementById('stRating').value)||7 });
+  saveData(true); renderStats(); closeModal('statsModal');
+}
+
+// ============ PLANIFICADOR ============
+function getWeekDates(offset){ const today = new Date(); const monday = new Date(today); monday.setDate(today.getDate() - today.getDay() + 1 + (offset*7)); const dates = []; for(let i=0;i<7;i++){ const d = new Date(monday); d.setDate(monday.getDate()+i); dates.push(d); } return dates; }
+function formatDate(d){ return d.toISOString().split('T')[0]; }
+function changeWeek(dir){ if(dir===0) currentWeekOffset = 0; else currentWeekOffset += dir; renderWeek(); }
+function renderWeek(){
+  const dates = getWeekDates(currentWeekOffset);
+  const dayNames = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  const monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  document.getElementById('weekLabel').textContent = 'Semana del ' + dates[0].getDate() + ' ' + monthNames[dates[0].getMonth()] + ' al ' + dates[6].getDate() + ' ' + monthNames[dates[6].getMonth()] + ' ' + dates[6].getFullYear();
+  const today = formatDate(new Date());
+  const grid = document.getElementById('weekGrid');
+  grid.innerHTML = dates.map((d,i)=>{
+    const dateStr = formatDate(d);
+    const plan = weekPlan[dateStr]||{type:'descanso'};
+    const isToday = dateStr===today;
+    const typeLabels = {descanso:'😴 Descanso',recup:'🟢 Recuperación',tactica:'🔵 Táctica',fuerza:'🟣 Fuerza',partido:'🔴 Partido'};
+    return '<div class="day-card ' + (isToday?'today':'') + ' ' + (plan.type==='descanso'?'rest':'') + '" onclick="openDayModal(\'' + dateStr + '\')"><div class="day-name">' + dayNames[i] + '</div><div class="day-date">' + d.getDate() + '</div><span class="session-tag ' + plan.type + '">' + (typeLabels[plan.type]||'Sin planificar') + '</span>' + (plan.time?'<div style="font-size:11px;color:var(--muted);margin-top:4px">🕐 ' + plan.time + '</div>':'') + (plan.load?'<div style="font-size:11px;color:var(--muted);margin-top:2px">💪 ' + plan.load + ' AU</div>':'') + '</div>';
+  }).join('');
+  renderPlannedVsRealChart();
+}
+function openDayModal(dateStr){
+  currentDayEdit = dateStr;
+  const plan = weekPlan[dateStr]||{type:'descanso',time:'',load:500,objective:''};
+  document.getElementById('dayModalTitle').textContent = '📅 ' + dateStr;
+  document.getElementById('daySessionType').value = plan.type||'descanso';
+  document.getElementById('dayTime').value = plan.time||'';
+  document.getElementById('dayLoad').value = plan.load||500;
+  document.getElementById('dayObjective').value = plan.objective||'';
+  document.getElementById('dayModal').classList.add('show');
+}
+function saveDayPlan(){ weekPlan[currentDayEdit] = { type:document.getElementById('daySessionType').value, time:document.getElementById('dayTime').value, load:parseInt(document.getElementById('dayLoad').value)||0, objective:document.getElementById('dayObjective').value }; saveData(true); renderWeek(); closeModal('dayModal'); }
+function saveObjectives(){ localStorage.setItem('pt_weekObj',document.getElementById('weekObjectives').value); showToast('✅ Objetivos guardados'); }
+function renderPlannedVsRealChart(){
+  const ctx = document.getElementById('chartPlannedVsReal'); if(!ctx) return;
+  if(window._chartPVR) window._chartPVR.destroy();
+  const dates = getWeekDates(currentWeekOffset);
+  const planned = dates.map(d=>(weekPlan[formatDate(d)]||{}).load||0);
+  const real = planned.map(p=>p>0?Math.floor(p*(0.7+Math.random()*0.5)):0);
+  window._chartPVR = new Chart(ctx,{type:'bar',data:{labels:dates.map(d=>['L','M','X','J','V','S','D'][d.getDay()===0?6:d.getDay()-1]),datasets:[{label:'Planificado',data:planned,backgroundColor:'rgba(0,217,255,.5)',borderRadius:6},{label:'Real',data:real,backgroundColor:'rgba(124,58,237,.5)',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,title:{display:true,text:'AU'}}}}});
+}
+
+// ============ ASISTENCIA ============
+function renderAttendance(){
+  const dateInput = document.getElementById('attendanceDate');
+  if(!dateInput.value) dateInput.value = formatDate(new Date());
+  const grid = document.getElementById('attendanceGrid');
+  const date = dateInput.value;
+  const session = document.getElementById('attendanceSession').value;
+  const key = date + '_' + session;
+  const current = attendance[key]||{};
+  grid.innerHTML = players.map(p=>{
+    const status = current[p.id]||'none';
+    const icons = {present:'✅',absent:'❌',excused:'⚠️',none:'⚪'};
+    return '<div class="attendance-card ' + (status!=='none'?status:'') + '" onclick="toggleAttendance(' + p.id + ')"><div class="player-avatar">' + (p.name[0]||'?').toUpperCase() + '</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + p.lastName + ', ' + p.name + '</div><div style="font-size:11px;color:var(--muted)">' + p.pos + ' · #' + (p.number||'-') + '</div></div><div class="attendance-status">' + icons[status] + '</div></div>';
+  }).join('');
+  updateAttendanceCounters(); renderAttendanceChart();
+}
+function toggleAttendance(playerId){
+  const date = document.getElementById('attendanceDate').value;
+  const session = document.getElementById('attendanceSession').value;
+  const key = date + '_' + session;
+  if(!attendance[key]) attendance[key] = {};
+  const current = attendance[key][playerId]||'none';
+  const cycle = {none:'present',present:'absent',absent:'excused',excused:'none'};
+  attendance[key][playerId] = cycle[current];
+  saveData(true); renderAttendance();
+}
+function updateAttendanceCounters(){
+  const date = document.getElementById('attendanceDate').value;
+  const session = document.getElementById('attendanceSession').value;
+  const key = date + '_' + session;
+  const data = attendance[key]||{};
+  let present=0,absent=0,excused=0;
+  Object.values(data).forEach(s=>{ if(s==='present')present++; else if(s==='absent')absent++; else if(s==='excused')excused++; });
+  document.getElementById('attPresent').textContent = present;
+  document.getElementById('attAbsent').textContent = absent;
+  document.getElementById('attExcused').textContent = excused;
+  document.getElementById('attPercent').textContent = players.length>0 ? Math.round((present/players.length)*100)+'%' : '0%';
+}
+function saveAttendance(){ saveData(true); showToast('✅ Asistencia guardada'); }
+function exportAttendance(){
+  let csv = 'Fecha,Sesión,Jugador,Estado\n';
+  Object.keys(attendance).forEach(key=>{ const parts = key.split('_'); const date = parts[0]; const session = parts.slice(1).join('_'); Object.keys(attendance[key]).forEach(pid=>{ const p = players.find(x=>x.id==pid); if(p) csv += date + ',' + session + ',' + p.lastName + ' ' + p.name + ',' + attendance[key][pid] + '\n'; }); });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download = 'asistencia_' + Date.now() + '.csv'; a.click(); showToast('✅ CSV exportado');
+}
+function renderAttendanceChart(){
+  const ctx = document.getElementById('chartAttendance'); if(!ctx) return;
+  if(window._chartAtt) window._chartAtt.destroy();
+  const days = []; for(let i=29;i>=0;i--){ const d = new Date(); d.setDate(d.getDate()-i); days.push(formatDate(d)); }
+  const data = days.map(d=>{ let p=0,t=0; Object.keys(attendance).forEach(k=>{ if(k.startsWith(d)){ Object.values(attendance[k]).forEach(s=>{ t++; if(s==='present')p++; }); } }); return t>0?Math.round((p/t)*100):null; });
+  window._chartAtt = new Chart(ctx,{type:'line',data:{labels:days.map(d=>d.substring(5)),datasets:[{label:'% Asistencia',data,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.1)',fill:true,tension:.3,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0,max:100}}}});
+}
+document.getElementById('attendanceDate').addEventListener('change',renderAttendance);
+document.getElementById('attendanceSession').addEventListener('change',renderAttendance);
+
+// ============ WELLNESS ============
+function renderWellness(){ document.getElementById('wellnessPlayer').innerHTML = players.map(p=>'<option value="' + p.id + '">' + p.lastName + ', ' + p.name + '</option>').join(''); updateWellnessCalc(); renderWellnessChart(); }
+function updateWellnessCalc(){
+  const vals = ['wSleep','wEnergy','wFatigue','wStress','wNutrition','wMood'].map(id=>parseInt(document.getElementById(id).value));
+  const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
+  document.getElementById('wellnessScore').textContent = avg.toFixed(1);
+  let status = 'Normal'; if(avg>=7.5) status = '🟢 Óptimo'; else if(avg>=5.5) status = '🟡 Normal'; else if(avg>=4) status = '🟠 Fatigado'; else status = '🔴 Riesgo';
+  document.getElementById('wellnessStatus').textContent = 'Estado: '+status;
+  document.getElementById('sRPEValue').textContent = parseInt(document.getElementById('wRPE').value) * (parseInt(document.getElementById('wDuration').value)||0);
+}
+function saveWellness(){
+  wellness.push({ date:formatDate(new Date()), playerId:parseInt(document.getElementById('wellnessPlayer').value), sleep:parseInt(document.getElementById('wSleep').value), energy:parseInt(document.getElementById('wEnergy').value), fatigue:parseInt(document.getElementById('wFatigue').value), stress:parseInt(document.getElementById('wStress').value), nutrition:parseInt(document.getElementById('wNutrition').value), mood:parseInt(document.getElementById('wMood').value), rpe:parseInt(document.getElementById('wRPE').value), duration:parseInt(document.getElementById('wDuration').value) });
+  saveData(true); renderWellnessChart(); showToast('✅ Wellness guardado');
+}
+function renderWellnessChart(){
+  const ctx = document.getElementById('chartWellness'); if(!ctx) return;
+  if(window._chartWell) window._chartWell.destroy();
+  const playerId = parseInt(document.getElementById('wellnessPlayer')?.value)||players[0]?.id;
+  const data = wellness.filter(w=>w.playerId===playerId).slice(-14);
+  const labels = data.length ? data.map(d=>d.date.substring(5)) : Array.from({length:14},(_,i)=>'D-'+(13-i));
+  const datasets = data.length ? [{label:'Sueño',data:data.map(d=>d.sleep),borderColor:'#3b82f6',tension:.3,pointRadius:2},{label:'Energía',data:data.map(d=>d.energy),borderColor:'#10b981',tension:.3,pointRadius:2},{label:'Fatiga',data:data.map(d=>d.fatigue),borderColor:'#ef4444',tension:.3,pointRadius:2},{label:'Ánimo',data:data.map(d=>d.mood),borderColor:'#f59e0b',tension:.3,pointRadius:2}] : [{label:'Wellness',data:labels.map(()=>5+Math.random()*3),borderColor:'#00d9ff',backgroundColor:'rgba(0,217,255,.1)',fill:true,tension:.3,pointRadius:3}];
+  window._chartWell = new Chart(ctx,{type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:1,max:10}}}});
+}
+
+// ============ TESTS ============
+function renderTests(){
+  document.getElementById('testPlayer').innerHTML = players.map(p=>'<option value="' + p.id + '">' + p.lastName + ', ' + p.name + '</option>').join('');
+  document.getElementById('testDate').value = formatDate(new Date());
+  const tb = document.getElementById('testsTable');
+  if(tests.length===0){ tb.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">🏋️</div><div class="empty-state-title">Sin tests</div></div></td></tr>'; }
+  else { tb.innerHTML = tests.slice().reverse().slice(0,20).map(t=>{ const p = players.find(x=>x.id===t.playerId); const units = {Cooper:'m','Yo-Yo':'nivel',CMJ:'cm',Sprint30:'s',Sprint10:'s'}; return '<tr><td>' + t.date + '</td><td>' + (p?p.lastName+', '+p.name:'-') + '</td><td><span class="badge info">' + t.type + '</span></td><td><strong>' + t.result + ' ' + (units[t.type]||'') + '</strong></td><td><button class="action-btn delete" onclick="deleteTest(' + t.id + ')">🗑️</button></td></tr>'; }).join(''); }
+  renderTestCharts();
+}
+function openTestModal(){ document.getElementById('testModal').classList.add('show'); }
+function saveTest(){ const result = parseFloat(document.getElementById('testResult').value); if(!result){ showToast('❌ Ingresa un resultado', true); return; } tests.push({id:Date.now(),date:document.getElementById('testDate').value,playerId:parseInt(document.getElementById('testPlayer').value),type:document.getElementById('testType').value,result}); saveData(true); renderTests(); closeModal('testModal'); }
+function deleteTest(id){ tests = tests.filter(t=>t.id!==id); saveData(true); renderTests(); showToast('✅ Eliminado'); }
+function renderTestCharts(){
+  const ctx1 = document.getElementById('chartTestCooper'); const ctx2 = document.getElementById('chartTestCMJ');
+  if(window._chartCooper) window._chartCooper.destroy(); if(window._chartCMJ) window._chartCMJ.destroy();
+  const cooper = tests.filter(t=>t.type==='Cooper').slice(-10); const cmj = tests.filter(t=>t.type==='CMJ').slice(-10);
+  if(ctx1) window._chartCooper = new Chart(ctx1,{type:'line',data:{labels:cooper.map(t=>t.date.substring(5)),datasets:[{label:'Cooper (m)',data:cooper.map(t=>t.result),borderColor:'#00d9ff',backgroundColor:'rgba(0,217,255,.1)',fill:true,tension:.3,pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  if(ctx2) window._chartCMJ = new Chart(ctx2,{type:'line',data:{labels:cmj.map(t=>t.date.substring(5)),datasets:[{label:'CMJ (cm)',data:cmj.map(t=>t.result),borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,.1)',fill:true,tension:.3,pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+}
+
+// ============ LESIONES ============
+function renderInjuries(){
+  document.getElementById('injPlayer').innerHTML = players.map(p=>'<option value="' + p.id + '">' + p.lastName + ', ' + p.name + '</option>').join('');
+  document.getElementById('injStart').value = formatDate(new Date());
+  document.getElementById('injActive').textContent = injuries.filter(i=>i.status==='active').length;
+  document.getElementById('injRehab').textContent = injuries.filter(i=>i.status==='rehab').length;
+  document.getElementById('injDays').textContent = injuries.reduce((s,i)=>s+(parseInt(i.daysEst)||0),0);
+  document.getElementById('injTotal').textContent = injuries.length;
+  const tb = document.getElementById('injuriesTable');
+  if(injuries.length===0){ tb.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🏥</div><div class="empty-state-title">Sin lesiones</div></div></td></tr>'; }
+  else { tb.innerHTML = injuries.slice().reverse().map(i=>{ const p = players.find(x=>x.id===i.playerId); const sm = {active:['🔴','Activa'],rehab:['🟡','Rehab'],recovered:['🟢','Recuperado']}; const [ic,txt] = sm[i.status]||['⚪','-']; return '<tr><td>' + (p?p.lastName+', '+p.name:'-') + '</td><td>' + i.type + '</td><td>' + i.zone + '</td><td>' + i.start + '</td><td>' + i.daysEst + ' días</td><td>' + ic + ' ' + txt + '</td><td><button class="action-btn delete" onclick="deleteInjury(' + i.id + ')">🗑️</button></td></tr>'; }).join(''); }
+}
+function openInjuryModal(){ document.getElementById('injuryModal').classList.add('show'); }
+function saveInjury(){ injuries.push({id:Date.now(),playerId:parseInt(document.getElementById('injPlayer').value),type:document.getElementById('injType').value,zone:document.getElementById('injZone').value,start:document.getElementById('injStart').value,daysEst:parseInt(document.getElementById('injDaysEst').value)||0,status:document.getElementById('injStatus').value,desc:document.getElementById('injDesc').value}); saveData(true); renderInjuries(); closeModal('injuryModal'); }
+function deleteInjury(id){ injuries = injuries.filter(i=>i.id!==id); saveData(true); renderInjuries(); showToast('✅ Eliminada'); }
+
+// ============ EJERCICIOS ============
+const exerciseLibrary = [{name:'Sentadilla Búlgara',cat:'Fuerza',icon:'🏋️',desc:'3x8/pierna'},{name:'Peso Muerto Rumano',cat:'Fuerza',icon:'🏋️',desc:'3x10'},{name:'Sprint 30m',cat:'Velocidad',icon:'⚡',desc:'6x30m al 95%'},{name:'Sprint 10m x 6',cat:'Velocidad',icon:'⚡',desc:'Aceleración pura'},{name:'Yo-Yo Intermittent',cat:'Resistencia',icon:'🏃',desc:'Resistencia específica'},{name:'Carrera Continua',cat:'Resistencia',icon:'🏃',desc:'30-40 min al 70-75%'},{name:'Saltos al Caja',cat:'Potencia',icon:'🦘',desc:'4x6 Pliometría'},{name:'CMJ Test',cat:'Potencia',icon:'🦘',desc:'Contramovimiento'},{name:'Movilidad Cadera',cat:'Movilidad',icon:'🧘',desc:'10 min'},{name:'Foam Roller',cat:'Movilidad',icon:'🧘',desc:'15 min'},{name:'Nórdico de Isquios',cat:'Prevención',icon:'🛡️',desc:'3x6'},{name:'Propiocepción Tobillo',cat:'Prevención',icon:'🛡️',desc:'5 min'},{name:'Copenhagen Plank',cat:'Prevención',icon:'🛡️',desc:'3x20s/lado'},{name:'Rondo 4vs2',cat:'Táctica',icon:'🎯',desc:'8 min'},{name:'Partido Condicionado',cat:'Táctica',icon:'🎯',desc:'15 min'},{name:'Circuitos de Pases',cat:'Técnica',icon:'⚽',desc:'15 min'},{name:'Remates a Puerta',cat:'Técnica',icon:'⚽',desc:'10 min'},{name:'Plancha Lateral',cat:'Fuerza',icon:'🏋️',desc:'3x30s/lado'},{name:'Agility Ladder',cat:'Velocidad',icon:'⚡',desc:'6 pasadas'},{name:'Hip Thrust',cat:'Fuerza',icon:'🏋️',desc:'3x10'}];
+function renderExercises(){
+  const filter = document.getElementById('exerciseFilter').value;
+  const all = [...exerciseLibrary, ...customExercises.map(e=>({name:e.name,cat:e.objective,icon:'🎯',desc:e.description}))];
+  const list = filter==='all' ? all : all.filter(e=>e.cat===filter);
+  document.getElementById('exercisesGrid').innerHTML = list.length ? list.map(e=>'<div class="exercise-card"><div class="exercise-icon">' + e.icon + '</div><div class="exercise-name">' + e.name + '</div><div class="exercise-cat">' + e.cat + '</div><div class="exercise-desc">' + e.desc + '</div></div>').join('') : '<div class="empty-state" style="grid-column:1/-1">Sin ejercicios</div>';
+}
+
+// ============ GENERADOR ============
+const positionExercises = {
+  POR:{Técnica:[{name:'Blocajes a Ras de Suelo',desc:'3x10 rep',duration:15,material:['Balones']},{name:'Desplazamientos y Atrapadas',desc:'4x8',duration:12,material:['Balones','Conos']},{name:'Saques de Portería',desc:'3x12',duration:10,material:['Balones']}],Táctica:[{name:'Salida con Pie',desc:'15 min',duration:15,material:['Balones','Conos']}],Físico:[{name:'Explosividad en Salto',desc:'4x6',duration:10,material:['Vallas']}],Prevención:[{name:'Movilidad de Cadera',desc:'10 min',duration:10,material:[]}],Velocidad:[{name:'Reacción y Salida',desc:'6x10m',duration:10,material:['Conos']}],Resistencia:[{name:'Circuito de Portero',desc:'20 min',duration:20,material:['Balones']}]},
+  DEF:{Técnica:[{name:'Temporización y Entrada',desc:'4x6',duration:15,material:['Balones','Conos']},{name:'Salida de Balón',desc:'3x10',duration:12,material:['Balones']}],Táctica:[{name:'Coberturas y Permutas',desc:'15 min',duration:15,material:['Conos']}],Físico:[{name:'Fuerza en Piernas',desc:'4x8',duration:12,material:[]}],Prevención:[{name:'Nordic Hamstring',desc:'3x6',duration:10,material:[]}],Velocidad:[{name:'Sprint de Recuperación',desc:'6x20m',duration:10,material:['Conos']}],Resistencia:[{name:'Circuito Defensivo',desc:'20 min',duration:20,material:['Balones']}]},
+  MID:{Técnica:[{name:'Pase y Control Orientado',desc:'4x10',duration:15,material:['Balones','Conos']},{name:'Conducción entre Líneas',desc:'3x8',duration:12,material:['Balones','Conos']}],Táctica:[{name:'Ocupación de Espacios',desc:'20 min',duration:20,material:['Conos']}],Físico:[{name:'Resistencia Intermitente',desc:'20 min',duration:20,material:['Conos']}],Prevención:[{name:'Copenhagen Plank',desc:'3x20s',duration:10,material:[]}],Velocidad:[{name:'Cambios de Dirección',desc:'6x20m',duration:12,material:['Conos']}],Resistencia:[{name:'Rondo 6vs3',desc:'15 min',duration:15,material:['Balones']}]},
+  FWD:{Técnica:[{name:'Definición 1vs1',desc:'5x6',duration:15,material:['Balones','Portería']},{name:'Control y Remate',desc:'4x8',duration:12,material:['Balones','Portería']}],Táctica:[{name:'Desmarques y Apoyos',desc:'15 min',duration:15,material:['Conos']}],Físico:[{name:'Velocidad de Reacción',desc:'6x10m',duration:10,material:['Conos']}],Prevención:[{name:'Excéntricos de Isquio',desc:'3x6',duration:10,material:[]}],Velocidad:[{name:'Sprint con Finalización',desc:'6x30m',duration:12,material:['Balones','Portería']}],Resistencia:[{name:'Circuito de Finalización',desc:'20 min',duration:20,material:['Balones','Portería']}]}
+};
+function selectPosition(pos,el){ document.querySelectorAll('.pos-tab').forEach(t=>t.classList.remove('active')); if(el) el.classList.add('active'); updateExerciseGenerator(); }
+function updateExerciseGenerator(){
+  const position = document.getElementById('genPosition').value;
+  const objective = document.querySelector('input[name="genObjective"]:checked').value;
+  let posGroup = 'MID'; if(position==='POR') posGroup='POR'; else if(['DFC','LD','LI'].includes(position)) posGroup='DEF'; else if(['MCD','MC','MCO'].includes(position)) posGroup='MID'; else if(['ED','EI','DC'].includes(position)) posGroup='FWD';
+  let category = objective; if(!positionExercises[posGroup][category]) category='Físico';
+  renderRecommended(positionExercises[posGroup][category]||[]);
+}
+function renderRecommended(exercises){
+  const container = document.getElementById('recommendedExercises');
+  document.getElementById('recSub').textContent = exercises.length + ' ejercicios disponibles';
+  container.innerHTML = exercises.length ? exercises.map(e=>'<div class="exercise-card"><div class="exercise-icon">🎯</div><div class="exercise-name">' + e.name + '</div><div class="exercise-cat">' + e.duration + ' min · ' + (e.material.join(', ')||'Sin material') + '</div><div class="exercise-desc">' + e.desc + '</div></div>').join('') : '<div class="empty-state" style="grid-column:1/-1">Sin ejercicios</div>';
+}
+function generateCustomExercise(){
+  const position = document.getElementById('genPosition').value;
+  const objective = document.querySelector('input[name="genObjective"]:checked').value;
+  const duration = document.getElementById('genDuration').value;
+  let posGroup = 'MID'; if(position==='POR') posGroup='POR'; else if(['DFC','LD','LI'].includes(position)) posGroup='DEF'; else if(['MCD','MC','MCO'].includes(position)) posGroup='MID'; else if(['ED','EI','DC'].includes(position)) posGroup='FWD';
+  let category = objective; if(!positionExercises[posGroup][category]) category='Físico';
+  const exercises = positionExercises[posGroup][category]||[];
+  if(!exercises.length){ showToast('❌ No hay ejercicios',true); return; }
+  const exercise = exercises[Math.floor(Math.random()*exercises.length)];
+  generatedExercise = {name:exercise.name,position,objective,duration,description:exercise.desc,material:exercise.material};
+  document.getElementById('previewTitle').textContent = '🎯 ' + exercise.name;
+  document.getElementById('previewContent').innerHTML = '<p><strong>📍 Posición:</strong> ' + position + '</p><p><strong>🎯 Objetivo:</strong> ' + objective + '</p><p><strong>⏱️ Duración:</strong> ' + duration + ' minutos</p><p><strong>📝 Descripción:</strong> ' + exercise.desc + '</p><p><strong>🛠️ Material:</strong> ' + (exercise.material.join(', ')||'Ninguno') + '</p>';
+  document.getElementById('exercisePreview').style.display = 'block';
+  showToast('✅ Ejercicio generado');
+}
+function saveGeneratedExercise(){ if(!generatedExercise) return; customExercises.push({...generatedExercise,id:Date.now(),date:new Date().toISOString().split('T')[0]}); saveData(true); showToast('✅ Ejercicio guardado'); }
+
+// ============ ALINEACIONES ============
+function renderLineup(){
+  const formations = ['4-3-3','4-4-2','4-2-3-1','3-5-2','3-4-3','5-3-2','4-1-4-1','3-4-2-1'];
+  document.getElementById('formationSelect').innerHTML = formations.map(f=>'<div class="formation-btn ' + (f===currentFormation?'active':'') + '" onclick="selectFormation(\'' + f + '\')">' + f + '</div>').join('');
+  renderFormationOnPitch('lineupPitch',currentFormation);
+  document.getElementById('lineupBench').innerHTML = players.map(p=>'<div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--panel);border-radius:6px;margin-bottom:6px"><div class="player-avatar">' + (p.name[0]||'?').toUpperCase() + '</div><div style="flex:1;font-size:12px"><strong>' + p.lastName + '</strong> · ' + p.pos + '</div><div style="font-size:11px;color:var(--muted)">#' + (p.number||'-') + '</div></div>').join('');
+  renderSavedLineups();
+}
+function selectFormation(f){ currentFormation = f; renderLineup(); }
+function saveLineup(){ const name = document.getElementById('lineupName').value.trim(); if(!name){ showToast('❌ Ingresa un nombre',true); return; } savedLineups.push({id:Date.now(),name,formation:currentFormation,date:formatDate(new Date())}); saveData(true); renderSavedLineups(); document.getElementById('lineupName').value = ''; showToast('✅ Alineación guardada'); }
+function renderSavedLineups(){
+  const container = document.getElementById('savedLineups');
+  if(!savedLineups.length){ container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👥</div><div class="empty-state-title">Sin alineaciones</div></div>'; return; }
+  container.innerHTML = savedLineups.slice().reverse().map(l=>'<div class="match-card" style="padding:12px"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:700">' + l.name + '</div><div style="font-size:11px;color:var(--muted)">' + l.date + ' · ' + l.formation + '</div></div><div style="display:flex;gap:6px"><button class="action-btn edit" onclick="loadLineup(' + l.id + ')">👁️</button><button class="action-btn delete" onclick="deleteLineup(' + l.id + ')">🗑️</button></div></div></div>').join('');
+}
+function loadLineup(id){ const l = savedLineups.find(x=>x.id===id); if(l){ currentFormation = l.formation; renderLineup(); showToast('Cargada: ' + l.name); } }
+function deleteLineup(id){ if(!confirm('¿Eliminar?')) return; savedLineups = savedLineups.filter(l=>l.id!==id); saveData(true); renderSavedLineups(); showToast('✅ Eliminada'); }
+
+// ============ VIDEO ============
+const video = document.getElementById('matchVideo');
+function loadVideo(e){ const f=e.target.files[0]; if(f){ video.src=URL.createObjectURL(f); video.load(); showToast('✅ Video cargado'); } }
+function addEventMarker(type){ const time = video.currentTime||0; const icons={sprint:'⚡',goal:'⚽',card:'🟨',tackle:'🛡️'}; const labels={sprint:'Sprint',goal:'Gol',card:'Tarjeta',tackle:'Entrada'}; videoEvents.push({id:Date.now(),time,type,icon:icons[type],label:labels[type],speed:(20+Math.random()*10).toFixed(1),hr:Math.floor(150+Math.random()*30)}); videoEvents.sort((a,b)=>a.time-b.time); renderVideoMarkers(); renderEventList(); showToast(icons[type] + ' ' + labels[type]); }
+function renderVideoMarkers(){ const dur = video.duration||90*60; document.getElementById('videoMarkers').innerHTML = videoEvents.map(e=>'<div class="video-marker ' + e.type + '" style="left:' + (e.time/dur)*100 + '%" onclick="seekTo(' + e.time + ')"></div>').join(''); }
+function renderEventList(){ const list = document.getElementById('eventList'); if(!videoEvents.length){ list.innerHTML='<div class="empty-state"><div class="empty-state-icon">🎬</div><div class="empty-state-title">Sin eventos</div></div>'; return; } list.innerHTML = videoEvents.map(e=>'<div class="event-item" onclick="seekTo(' + e.time + ')"><div class="event-time">' + formatTime(e.time) + '</div><div class="event-icon ' + e.type + '">' + e.icon + '</div><div style="flex:1"><div style="font-weight:600;font-size:12px">' + e.label + '</div><div style="font-size:10px;color:var(--muted)">' + e.speed + ' km/h · ' + e.hr + ' bpm</div></div><button onclick="event.stopPropagation();videoEvents=videoEvents.filter(x=>x.id!==' + e.id + ');renderVideoMarkers();renderEventList()" style="background:none;border:none;color:var(--danger);cursor:pointer">🗑️</button></div>').join(''); }
+function seekTo(time){ video.currentTime=time; video.play().catch(()=>{}); }
+function formatTime(s){ const m=Math.floor(s/60),sec=Math.floor(s%60); return m.toString().padStart(2,'0') + ':' + sec.toString().padStart(2,'0'); }
+video.addEventListener('timeupdate',()=>{ document.getElementById('videoOverlay').textContent = '⏱ ' + formatTime(video.currentTime); });
+
+// ============ REPORTES ============
+function generateReport(type){
+  const preview = document.getElementById('reportPreview');
+  const date = new Date().toLocaleDateString('es-ES');
+  const club = clubConfig.name; const dt = clubConfig.dtName||'DT sin configurar';
+  const header = '<div style="display:flex;justify-content:space-between;border-bottom:2px solid #00d9ff;padding-bottom:10px;margin-bottom:14px"><div><h1 style="border:none;padding:0;margin:0">' + club + '</h1><p style="color:#666;margin:3px 0 0">ProTrack Analytics</p></div><div style="text-align:right;color:#666;font-size:11px"><div>DT: <strong style="color:#000">' + dt + '</strong></div><div>' + date + '</div></div></div>';
+  const reports = {
+    individual: header + '<h2>👤 Reporte Individual</h2><p>Jugador: ' + document.getElementById('reportPlayer').value + '</p><table><tr><th>Métrica</th><th>Valor</th></tr><tr><td>Distancia</td><td>10.84 km</td></tr><tr><td>Player Load</td><td>842 AU</td></tr><tr><td>ACWR</td><td>1.12</td></tr></table>',
+    equipo: header + '<h2>👥 Reporte del Equipo</h2><p>Plantel: <strong>' + players.length + ' jugadores</strong></p><h3>🚨 Alertas</h3><ul>' + (players.filter(p=>p.acwr>1.3).map(p=>'<li>' + p.lastName + ': ACWR ' + p.acwr.toFixed(2) + '</li>').join('') || '<li>Sin alertas</li>') + '</ul>',
+    medico: header + '<h2>🏥 Reporte Médico</h2><h3>Lesiones activas: ' + injuries.filter(i=>i.status==='active').length + '</h3><table><tr><th>Jugador</th><th>Lesión</th><th>Días</th></tr>' + (injuries.slice(0,5).map(i=>{const p=players.find(x=>x.id===i.playerId);return '<tr><td>' + (p?p.lastName:'-') + '</td><td>' + i.type + '</td><td>' + i.daysEst + '</td></tr>';}).join('') || '<tr><td colspan="3">Sin lesiones</td></tr>') + '</table>',
+    tecnico: header + '<h2>📋 Reporte Técnico</h2><p>DT: <strong>' + dt + '</strong></p><p>Disponibles: ' + players.filter(p=>p.status==='ok').length + '/' + players.length + '</p>',
+    semanal: header + '<h2>📅 Reporte Semanal</h2><p>Carga total: <strong>4,942 AU</strong></p>',
+    partido: header + '<h2>🏆 Post-Partido</h2><p>Club: <strong>' + club + '</strong></p>'
+  };
+  preview.innerHTML = reports[type]||reports.equipo;
+  showToast('✅ Reporte generado');
+}
+function downloadReport(format){
+  const content = document.getElementById('reportPreview').innerHTML;
+  if(format==='pdf'){ const w=window.open('','','width=800,height=600'); w.document.write('<html><head><title>Reporte</title><style>body{font-family:Arial;padding:40px;line-height:1.6}h1{border-bottom:2px solid #00d9ff;padding-bottom:6px}h2{color:#7c3aed}table{width:100%;border-collapse:collapse;margin:8px 0}th,td{padding:6px;border:1px solid #ddd;text-align:left;font-size:11px}th{background:#f3f4f6}</style></head><body>' + content + '<script>setTimeout(()=>window.print(),500)<\/script></body></html>'); showToast('Preparando PDF...'); }
+  else if(format==='email'){ showToast('📧 Enviado'); }
+  else { const b=new Blob(['<html><body>' + content + '</body></html>'],{type:'text/html'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='reporte_' + Date.now() + '.html'; a.click(); showToast('✅ Descargado'); }
+}
+
+// ============ MODAL ============
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+function showConfirm(icon,title,text,cb){ document.getElementById('confirmIcon').textContent = icon; document.getElementById('confirmTitle').textContent = title; document.getElementById('confirmText').textContent = text; confirmCallback = cb; document.getElementById('confirmBtn').onclick = ()=>{ if(confirmCallback) confirmCallback(); closeModal('confirmModal'); }; document.getElementById('confirmModal').classList.add('show'); }
+
+// ============ CHARTS ============
+Chart.defaults.color = '#9ca3af'; Chart.defaults.borderColor = '#2a3550'; Chart.defaults.font.family = 'Segoe UI, system-ui';
+function initCharts(){
+  new Chart(document.getElementById('chartZones'),{type:'bar',data:{labels:['Parado','Caminata','Trote','Carrera','Sprint'],datasets:[{data:[0.12,1.92,4.21,3.82,0.89],backgroundColor:['#6b7280','#9ca3af','#10b981','#f59e0b','#ef4444'],borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  new Chart(document.getElementById('chartHR'),{type:'line',data:{labels:Array.from({length:11},(_,i)=>i+'min'),datasets:[{data:Array.from({length:11},(_,i)=>130+Math.sin(i/2)*20+Math.random()*10),borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.1)',fill:true,tension:.4,pointRadius:0,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  new Chart(document.getElementById('chartSpeedZones'),{type:'doughnut',data:{labels:['< 7','7-14','14-20','20-25','> 25 km/h'],datasets:[{data:[18,38,24,14,6],backgroundColor:['#6b7280','#3b82f6','#10b981','#f59e0b','#ef4444'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right'}}}});
+  new Chart(document.getElementById('chartAccDec'),{type:'bar',data:{labels:['Baja','Media','Alta','Muy Alta'],datasets:[{label:'Acc',data:[42,58,32,10],backgroundColor:'#00d9ff',borderRadius:6},{label:'Dec',data:[40,56,30,12],backgroundColor:'#7c3aed',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false}});
+  new Chart(document.getElementById('chartSpeedTimeline'),{type:'line',data:{labels:Array.from({length:100},(_,i)=>i),datasets:[{data:Array.from({length:100},()=>Math.random()*25+3),borderColor:'#00d9ff',backgroundColor:'rgba(0,217,255,.1)',fill:true,tension:.3,pointRadius:0,borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  new Chart(document.getElementById('chartEffortZones'),{type:'polarArea',data:{labels:['Bajo','Medio','Alto','Muy Alto'],datasets:[{data:[18,32,28,22],backgroundColor:['rgba(16,185,129,.7)','rgba(59,130,246,.7)','rgba(245,158,11,.7)','rgba(239,68,68,.7)']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right'}}}});
+  new Chart(document.getElementById('chartHRDetail'),{type:'line',data:{labels:Array.from({length:90},(_,i)=>i+1),datasets:[{data:Array.from({length:90},()=>140+Math.random()*40),borderColor:'#ef4444',fill:true,tension:.4,pointRadius:0,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  new Chart(document.getElementById('chartIntensity'),{type:'line',data:{labels:Array.from({length:90},(_,i)=>i+1),datasets:[{data:Array.from({length:90},(_,i)=>100+Math.sin(i/8)*30+Math.random()*20),borderColor:'#7c3aed',backgroundColor:'rgba(124,58,237,.15)',fill:true,tension:.3,pointRadius:0,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  new Chart(document.getElementById('chartACWR'),{type:'line',data:{labels:['S1','S2','S3','S4','S5','S6'],datasets:[{label:'ACWR',data:[0.95,1.08,1.22,1.38,1.15,1.12],borderColor:'#00d9ff',fill:true,tension:.3,borderWidth:3},{label:'1.3',data:[1.3,1.3,1.3,1.3,1.3,1.3],borderColor:'#ef4444',borderDash:[5,5],pointRadius:0,fill:false},{label:'0.8',data:[0.8,0.8,0.8,0.8,0.8,0.8],borderColor:'#f59e0b',borderDash:[5,5],pointRadius:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false}});
+  new Chart(document.getElementById('chartSessions'),{type:'bar',data:{labels:['06/09','07/09','08/09','09/09'],datasets:[{label:'PL',data:[420,1120,780,842],backgroundColor:'#00d9ff',borderRadius:6},{label:'Dist×10',data:[580,1180,820,1084],backgroundColor:'#7c3aed',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false}});
+}
+
+// Asimetrías
+const asymData = [{label:'Impulso',l:52,r:48},{label:'Fuerza',l:51,r:49},{label:'Contacto',l:48,r:52},{label:'Vuelo',l:53,r:47},{label:'Cadencia',l:50,r:50},{label:'Carga mec.',l:54,r:46}];
+document.getElementById('asymmetryContainer').innerHTML = asymData.map(a=>'<div class="asym-row"><div class="asym-label">' + a.label + '</div><div class="asym-bar"><div class="asym-l" style="width:' + a.l + '%">I ' + a.l + '%</div><div class="asym-r" style="width:' + a.r + '%">D ' + a.r + '%</div></div></div>').join('') + '<div style="margin-top:14px;padding:10px;background:rgba(245,158,11,.1);border-left:3px solid var(--warning);border-radius:6px;font-size:12px">⚠️ <strong>Alerta:</strong> Asimetría 8% en carga mecánica.</div>';
+
+// Heatmap
+function drawHeatmap(canvasId,intensity){
+  intensity = intensity || 1;
+  const c = document.getElementById(canvasId); if(!c) return;
+  const ctx = c.getContext('2d'); const rect = c.parentElement.getBoundingClientRect();
+  c.width = rect.width; c.height = rect.height; ctx.clearRect(0,0,c.width,c.height);
+  [{x:.5,y:.5,r:80,i:1*intensity},{x:.45,y:.45,r:60,i:.8*intensity},{x:.55,y:.55,r:60,i:.8*intensity},{x:.3,y:.5,r:40,i:.6*intensity},{x:.7,y:.5,r:40,i:.6*intensity}].forEach(h=>{
+    const grd = ctx.createRadialGradient(h.x*c.width,h.y*c.height,0,h.x*c.width,h.y*c.height,h.r);
+    grd.addColorStop(0,'rgba(255,0,0,' + (.6*h.i) + ')'); grd.addColorStop(.4,'rgba(255,255,0,' + (.4*h.i) + ')'); grd.addColorStop(.7,'rgba(0,255,0,' + (.2*h.i) + ')'); grd.addColorStop(1,'rgba(0,0,255,0)');
+    ctx.fillStyle = grd; ctx.fillRect(0,0,c.width,c.height);
+  });
+}
+
+// ============ UTILS ============
+function showToast(msg,isError){ const t=document.getElementById('toast'); document.getElementById('toastMsg').textContent=msg; t.className='toast show'+(isError?' error':''); setTimeout(function(){t.classList.remove('show')},2500); }
+function exportCSV(){
+  let csv = 'Nombre,Apellido,Pos,Edad,Dorsal,Dist_km,VelMax,Sprints,PL,FC,ACWR\n';
+  players.forEach(p=>csv+=p.name+','+p.lastName+','+p.pos+','+(p.age||'')+','+(p.number||'')+','+(p.dist||0)+','+(p.vmax||0)+','+(p.sprints||0)+','+(p.pl||0)+','+(p.fc||0)+','+(p.acwr||0)+'\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download=(clubConfig.shortName||'protrack')+'_'+Date.now()+'.csv'; a.click(); showToast('✅ CSV exportado');
+}
+
+// ============ BACKUP ============
+function exportAllData(){
+  const data = {version:'7.0',exportDate:new Date().toISOString(),players:players,clubConfig:clubConfig,matches:matches,scoutings:scoutings,weekPlan:weekPlan,attendance:attendance,wellness:wellness,tests:tests,injuries:injuries,matchStats:matchStats,customExercises:customExercises,savedLineups:savedLineups};
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'protrack_backup_' + new Date().toISOString().split('T')[0] + '.json'; a.click();
+  showToast('✅ Backup exportado');
+}
+function importAllData(event){
+  const file = event.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try {
+      const data = JSON.parse(ev.target.result);
+      if(data.players) players = data.players;
+      if(data.clubConfig) clubConfig = data.clubConfig;
+      if(data.matches) matches = data.matches;
+      if(data.scoutings) scoutings = data.scoutings;
+      if(data.weekPlan) weekPlan = data.weekPlan;
+      if(data.attendance) attendance = data.attendance;
+      if(data.wellness) wellness = data.wellness;
+      if(data.tests) tests = data.tests;
+      if(data.injuries) injuries = data.injuries;
+      if(data.matchStats) matchStats = data.matchStats;
+      if(data.customExercises) customExercises = data.customExercises;
+      if(data.savedLineups) savedLineups = data.savedLineups;
+      saveData(true); updateClubUI(); renderAll(); showToast('✅ Backup importado');
+    } catch(e) { showToast('❌ Error: ' + e.message, true); }
+  };
+  reader.readAsText(file);
+}
+
+// ============ RENDER ALL ============
+function renderAll(){
+  renderRoster(); renderPlayersTable(); renderPlayerChips();
+  const sel = document.getElementById('reportPlayer');
+  if(sel) sel.innerHTML = '<option>Todos</option>' + players.map(p=>'<option>' + p.lastName + ', ' + p.name + '</option>').join('');
+}
+
+// ============ AUTO-SAVE ============
+window.addEventListener('beforeunload', function(){ saveData(false); });
+setInterval(function(){ saveData(false); }, 30000);
+
+// ============ INIT ============
+console.log('🚀 ProTrack Analytics PRO v7.0');
+console.log('📍 Protocolo:', window.location.protocol);
+loadData();
+setTimeout(function(){
+  console.log('🔄 Aplicando datos a la UI...');
+  updateClubUI();
+  renderAll();
+  initCharts();
+  setTimeout(function(){drawHeatmap('heatmapCanvas')},200);
+  document.getElementById('weekObjectives').value = localStorage.getItem('pt_weekObj')||'';
+  if(window.location.protocol === 'file:'){
+    showToast('⚠️ Modo file://. Usa http://localhost:8000', true);
+  } else {
+    showToast('✅ App iniciada correctamente');
+  }
+}, 300);
+</script>
+</body>
+</html>

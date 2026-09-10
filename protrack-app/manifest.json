@@ -1,0 +1,27 @@
+{
+  "name": "ProTrack Analytics PRO",
+  "short_name": "ProTrack",
+  "description": "Software profesional de análisis GPS deportivo",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0a0e1a",
+  "theme_color": "#0a0e1a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%230a0e1a'/><rect x='30' y='30' width='132' height='132' rx='24' fill='url(%23g)'/><text x='96' y='120' font-size='80' font-weight='bold' text-anchor='middle' fill='white' font-family='Arial'>P</text><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%2300d9ff'/><stop offset='1' stop-color='%237c3aed'/></linearGradient></defs></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%230a0e1a'/><rect x='80' y='80' width='352' height='352' rx='60' fill='url(%23g)'/><text x='256' y='320' font-size='220' font-weight='bold' text-anchor='middle' fill='white' font-family='Arial'>P</text><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%2300d9ff'/><stop offset='1' stop-color='%237c3aed'/></linearGradient></defs></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["sports", "productivity"],
+  "lang": "es",
+  "scope": "/"
+}
